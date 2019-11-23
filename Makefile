@@ -9,18 +9,29 @@ CC = gcc
 #	-I <path> is needed to include
 # -------------------------------------------------------------
 RMF = rm -f
-WARN = #-g -Wall -Wpedantic -fsanitize=address -Wextra 
+WARN = -g -Wall -Wpedantic -fsanitize=address -Wextra 
 #-Wall -g
-TARGET = tsp
+TARGET = main
 
 SRCDIR = src
 BINDIR = bin
-CBC_ROOT_DIR = $(HOME)/CBC-COINOR/build
-CBCLIBS = $(CBC_ROOT_DIR)/lib
-INCL = -I $(CBC_ROOT_DIR)/include/coin -I $(CBC_ROOT_DIR)/include/coin/ThirdParty
-RPATH = -Wl,-rpath=$(CBCLIBS) #
-LIBSFLAG1 = -lpthread -lCbcSolver -lCbc -lOsiCbc -lm -ldl -lOsiClp -lClpSolver -lClp #-lcoinasl -lcoinmumps
-LIBS = -L $(CBCLIBS) $(RPATH) $(LIBSFLAG1)
+
+CPLEX_128 = /opt/ibm/ILOG/CPLEX_Studio128
+CPLEX_129 = /opt/ibm/ILOG/CPLEX_Studio129
+
+ifneq "$(wildcard $(CPLEX_BLADE) )" ""
+	CPLEX_LOC = $(CPLEX_BLADE)/cplex/include/ilcplex
+	LIB_LOC = $(CPLEX_BLADE)/cplex/lib/x86-64_linux/static_pic
+else ifneq "$(wildcard $(CPLEX_129) )" ""
+	CPLEX_LOC = $(CPLEX_129)/cplex/include/ilcplex
+	LIB_LOC = $(CPLEX_129)/cplex/lib/x86-64_linux/static_pic
+else ifneq "$(wildcard $(CPLEX_128) )" ""
+	CPLEX_LOC = $(CPLEX_128)/cplex/include/ilcplex
+	LIB_LOC = $(CPLEX_128)/cplex/lib/x86-64_linux/static_pic
+endif
+
+INCL = -I $(CPLEX_LOC)
+LIBS = -L ${LIB_LOC}  -lcplex -lm -lpthread -ldl
 
 FILES = $(wildcard $(SRCDIR)/*.c) #this function lists all .c files
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(BINDIR)/%.o, $(FILES)) #substitute file.c -> file.o
@@ -31,7 +42,7 @@ current_dir = $(shell pwd)
 CFLAGS = #
 #-O3 -pipe -DNDEBUG -Wimplicit -Wparentheses -Wsequence-point -Wreturn-type -Wcast-qual -Wall -Wno-unknown-pragmas -Wno-long-long   -DCBC_BUILD
 
-all: $(TARGET) 
+all: $(TARGET)
 
 $(TARGET):$(OBJECTS)
 	$(CC) $(WARN) $(OBJECTS) -o $(TARGET) $(LIBS) $(CFLAGS)

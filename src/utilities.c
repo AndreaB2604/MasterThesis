@@ -1,109 +1,31 @@
-#include "tsp.h"
+#include "flow.h"
 
 #define LINE_LENGTH 180
 
 double dist_att(int i, int j, instance *inst);
+double dist_ceil2D(int i, int j, instance *inst);
 double dist_euc2D(int i, int j, instance *inst);
-double dist_geo(int i, int j, instance *inst);
 void print_plot_subtour(instance *inst, char *plot_file_name);
-void print_plot_mtz(instance *inst, char *plot_file_name);
-void print_plot_compact_custom(instance *inst, char *plot_file_name);
-
-// this function computes the connected components where:
-// columns_number is the number of variables of the model
-// node_components will be an array that will contain in the i-th position the number of the connected component of the i-th node
-// components_value will be an array of length number_cc that will contain only the values of the different connected components
-// number_cc is a pointer that will contain the number of connected components of the graph
-// NOTE: the instance is needed only for the xpos function and the number of nodes
-void connected_components(instance *inst, double *best_sol, int columns_number, int *nodes_components, int *components_values, int *number_cc)
-{
-	for(int i = 0; i < inst->nnodes; i++)
-	{
-		nodes_components[i] = i;		// components go from 0 to n-1
-	}
-
-	for(int k = 0; k < columns_number; k++)
-	{
-		if(best_sol[k] > TOLERANCE)
-		{
-			int l = inst->nnodes-1;
-			int flag = 0;
-			for(int i = 0; (i < inst->nnodes-1) && (!flag); i++)
-			{
-				if(k < l)
-				{
-					for(int j = i+1; j < inst->nnodes; j++)
-					{
-						// if the {i,j} exists then i and j belong to the same connected component
-						if((xpos(i, j, inst) == k)) 
-						{
-							if(nodes_components[i] != nodes_components[j])
-							{
-								int ci = nodes_components[i];
-								int cj = nodes_components[j];
-								for(int n = 0; n < inst->nnodes; n++)
-								{
-									if(nodes_components[n] == cj)
-									{
-										nodes_components[n] = ci;
-									}
-								}
-							}	
-							flag = 1;
-							break;
-						}
-					}
-				}
-				else
-				{
-					l += inst->nnodes-i-2; 
-				}
-			}
-		}
-	}
-
-	for(int i = 0; i < inst->nnodes; i++)
-	{
-		components_values[i] = -1;
-	}
-
-	int num_comp = 0; // number of current connected components
-	// compute what the connected components are and their number
-	for(int i = 0; i < inst->nnodes; i++)
-	{
-		for(int j = 0; (j < inst->nnodes) && (nodes_components[i] != components_values[j]); j++)
-		{
-			if(components_values[j] == -1)
-			{
-				components_values[j] = nodes_components[i];
-				num_comp++;
-				break;
-			}
-		}
-	}
-	
-	*number_cc = num_comp;
-}
 
 double dist(int i, int j, instance *inst)
 {
 	if(!strncmp(inst->dist_type, "EUC_2D", 6))
 		return dist_euc2D(i, j, inst);
-	else if(!strncmp(inst->dist_type, "GEO", 3))
-		return dist_geo(i, j, inst);
+	else if(!strncmp(inst->dist_type, "CEIL_2D", 7))
+		return dist_ceil2D(i, j, inst);
 	else if(!strncmp(inst->dist_type, "ATT", 3))
 		return dist_att(i, j, inst);
 	else
 	{
-		print_error(" format error:  only ATT, EUC_2D and GEO distances implemented so far!");
+		print_error(" format error:  only ATT, CEIL_2D and EUC_2D distances implemented so far!");
 		return -1;
 	}
 }
 
 double dist_att(int i, int j, instance *inst)
 {
-	double dx = inst->xcoord[i] - inst->xcoord[j];
-	double dy = inst->ycoord[i] - inst->ycoord[j];
+	double dx = inst->x_nodes[i] - inst->x_hosp[j];
+	double dy = inst->y_nodes[i] - inst->y_hosp[j];
 
 	double rij = sqrt((dx*dx + dy*dy) / 10.0);
 	double tij = (int) (rij + 0.5);
@@ -116,55 +38,46 @@ double dist_att(int i, int j, instance *inst)
 
 double dist_euc2D(int i, int j, instance *inst)
 {
-	double dx = inst->xcoord[i] - inst->xcoord[j];
-	double dy = inst->ycoord[i] - inst->ycoord[j];
-	int dis = sqrt(dx*dx + dy*dy) + 0.5; // nearest integer 
-	return ((double) dis);
+	double dx = inst->x_nodes[i] - inst->x_hosp[j];
+	double dy = inst->y_nodes[i] - inst->y_hosp[j];
+	double dis = sqrt(dx*dx + dy*dy);
+	return dis;
 }
 
-double dist_geo(int i, int j, instance *inst)
+double dist_ceil2D(int i, int j, instance *inst)
 {
-	double const PI = 3.141592;
-	double const RRR = 6378.388;
-	// compute latutude and longitude of inst->nnodes[i]
-	double deg = (int) inst->xcoord[i];
-	double min = inst->xcoord[i] - deg;
-	double latitude_i = PI * (deg + 5.0 * min / 3.0 ) / 180.0;
-	deg = (int) inst->ycoord[i];
-	min = inst->ycoord[i] - deg;
-	double longitude_i = PI * (deg + 5.0 * min / 3.0 ) / 180.0;
-
-	// compute latutude and longitude of inst->nnodes[j]
-	deg = (int) inst->xcoord[j];
-	min = inst->xcoord[j] - deg;
-	double latitude_j = PI * (deg + 5.0 * min / 3.0 ) / 180.0;
-	deg = (int) inst->ycoord[j];
-	min = inst->ycoord[j] - deg;
-	double longitude_j = PI * (deg + 5.0 * min / 3.0 ) / 180.0;
-
-	double q1 = cos(longitude_i - longitude_j);
-	double q2 = cos(latitude_i - latitude_j);
-	double q3 = cos(latitude_i + latitude_j);
-	double dij = (int) (RRR * acos( 0.5*((1.0+q1)*q2 - (1.0-q1)*q3) ) + 1.0);
-	return dij;
+	double dx = inst->x_nodes[i] - inst->x_hosp[j];
+	double dy = inst->y_nodes[i] - inst->y_hosp[j];
+	int dis = ceil(sqrt(dx*dx + dy*dy)); // ceiling
+	return ((double) dis);
 }
 
 void free_instance(instance *inst)
 {
-	free(inst->xcoord);
-	free(inst->ycoord);
-	free(inst->input_file);
+	free(inst->x_nodes);
+	free(inst->y_nodes);
+	free(inst->r_nodes);
+	free(inst->x_hosp);
+	free(inst->y_hosp);
+	free(inst->c_hosp);
+
 	free(inst->dist_type);
+	free(inst->input_file);
 	free(inst->model_type);
 	free(inst->best_sol);
 }
 
 void init_instance(instance *inst)
 {
-	inst->xcoord = NULL;
-	inst->ycoord = NULL;
-	inst->input_file = NULL;
+	inst->x_nodes = NULL;
+	inst->y_nodes = NULL;
+	inst->r_nodes = NULL;
+	inst->x_hosp = NULL;
+	inst->y_hosp = NULL;
+	inst->c_hosp = NULL;
+
 	inst->dist_type = NULL;
+	inst->input_file = NULL;
 	inst->model_type = NULL;
 	inst->best_sol = NULL;
 }
@@ -195,8 +108,9 @@ void parse_command_line(int argc, char** argv, instance *inst)
 	inst->random_seed = 201709013;	// default random seed for CPLEX 12.8
 
 	int help = 0;
-	if(argc < 1) { help = 1; }
-	for(i=1; i<argc; i++)
+	if(argc < 1)
+		help = 1;
+	for(i = 1; i < argc; i++)
 	{
 		// input file
 		int param_exists = (argc != i+1);
@@ -249,21 +163,14 @@ void parse_command_line(int argc, char** argv, instance *inst)
 				inst->model_type = (char *) realloc(inst->model_type, strlen(argv[++i])+1);
 				strcpy(inst->model_type, argv[i]);
 			}
-			if((strncmp(inst->model_type, "subtour", 7) && 
-				strncmp(inst->model_type, "sec_loop", 8) &&
-				strncmp(inst->model_type, "write_sec_loop", 14) &&
-				strncmp(inst->model_type, "sec_callback", 12)) ||
-				!param_exists)  
-			{
-				printf("\nModel type non supported, choose between:\n");
-				printf("subtour : optimisation without SECs\n");
-				printf("sec_loop : optimisation with SECs using the loop model\n");
-				printf("write_sec_loop : optimisation with SECs using the loop model writing in each iteration a lp file\n");
-				printf("sec_callback : optimisation with SECs using the callback model\n");
-				fflush(NULL); 
+			if((strncmp(inst->model_type, "flow", 4)) || !param_exists)  
+		    {
+		    	printf("\nModel type non supported, choose between:\n");
+		    	printf("flow : optimisation with flow model\n");
+		    	fflush(NULL); 
 				help = 1;
 				break;
-			}
+		    }
 		} 	
 		else if(!strcmp(argv[i], "-help") || !strcmp(argv[i], "--help")) { help = 1; break; }		// help mutually exclusive
 		else { help = 1; break; }
@@ -284,53 +191,6 @@ void parse_command_line(int argc, char** argv, instance *inst)
 	if(help) exit(1);
 }
 
-void print_best_sol(instance *inst)
-{
-	if(inst->best_sol == NULL)
-		print_error("Best solution not available in print_best_sol()");
-
-	int cur_numcols;
-	if(!strncmp(inst->model_type, "subtour", 7) || 
-		!strncmp(inst->model_type, "sec_loop", 8) ||
-		!strncmp(inst->model_type, "sec_callback", 12) ||
-		!strncmp(inst->model_type, "compact_custom", 14))
-		cur_numcols = inst->nnodes * (inst->nnodes - 1) / 2;
-	else if(!strncmp(inst->model_type, "mtz", 3))
-		cur_numcols = inst->nnodes * inst->nnodes;
-	else 
-		print_error(" format error: plot not supported in print_best_sol()!");
-
-	printf("{");
-	for(int k = 0; k < cur_numcols; k++)
-	{
-		if(inst->best_sol[k] > TOLERANCE)
-		{	
-			int l = inst->nnodes -1;
-			int flag = 0;
-			for(int i=0; (i<inst->nnodes-1) && (!flag); i++)
-			{
-				if(k<l)
-				{
-					for(int j=i+1; j<inst->nnodes; j++)
-					{
-						if(xpos(i, j, inst) == k) 
-						{
-							printf("x_%d_%d, ", i+1, j+1);
-							flag = 1;
-							break;
-						}
-					}
-				}
-				else
-				{
-					l += inst->nnodes-i-2; 
-				}
-			}
-		}
-	}
-	printf("}\n\n");
-}
-
 
 void print_error(const char *err)
 {
@@ -341,10 +201,7 @@ void print_error(const char *err)
 
 void print_plot(instance *inst, char *plot_file_name)
 {
-	if(!strncmp(inst->model_type, "subtour", 7) || 
-		!strncmp(inst->model_type, "sec_loop", 8) ||
-		!strncmp(inst->model_type, "write_sec_loop", 14) ||
-		!strncmp(inst->model_type, "sec_callback", 12))
+	if(!strncmp(inst->model_type, "flow", 4))
 		print_plot_subtour(inst, plot_file_name);
 	else 
 		print_error(" format error: plot non supported in print_plot()!");
@@ -352,9 +209,7 @@ void print_plot(instance *inst, char *plot_file_name)
 
 void print_plot_subtour(instance *inst, char *plot_file_name)
 {
-	if(inst->best_sol == NULL)
-		print_error("Best solution not available in print_plot_subtour()");
-
+	/*
 	int i, j, k, l, flag;
 	int cur_numcols = xpos(inst->nnodes-2, inst->nnodes-1, inst)+1; // this is equal to n*(n-1)/2
 	FILE *file = fopen(plot_file_name, "w");
@@ -394,114 +249,41 @@ void print_plot_subtour(instance *inst, char *plot_file_name)
 		}
 	}
 	fclose(file);
-}
-
-void print_plot_mtz(instance *inst, char *plot_file_name)
-{
-	if(inst->best_sol == NULL)
-		print_error("Best solution not available in print_plot_mtz()");
-
-	int i,j,k;
-	FILE *file = fopen(plot_file_name, "w");
-	int max_idx_x = inst->nnodes * inst->nnodes;
-	fprintf(file, "%d\n", inst->nnodes);
-	for(i=0; i<inst->nnodes; i++)
-	{
-		fprintf(file, "%lf %lf\n", inst->xcoord[i], inst->ycoord[i]);
-	}
-
-	fprintf(file, "\nNON ZERO VARIABLES\n");
-	// print the x variables that are non-zero
-	for(k = 0; k < max_idx_x; k++)
-	{
-		if(inst->best_sol[k] > TOLERANCE)
-		{
-			for(i=0; i<inst->nnodes; i++)
-			{
-				for(j=0; j<inst->nnodes; j++)
-				{
-					if((i!=j) && (xpos_mtz(i, j, inst) == k)) 
-					{
-						fprintf(file, "x_%d_%d = %f\n", i+1, j+1, inst->best_sol[k]);
-					}
-				}
-			}	
-		}
-	}
-	
-	fclose(file);
-}
-
-void print_plot_compact_custom(instance *inst, char *plot_file_name)
-{
-	if(inst->best_sol == NULL)
-		print_error("Best solution not available in print_plot_compact_custom()");
-
-	FILE *file = fopen(plot_file_name, "w");
-	int max_idx_x = inst->nnodes * (inst->nnodes-1) / 2; 	// == xpos(inst->nnodes-1, inst->nnodes-1, inst)
-	fprintf(file, "%d\n", inst->nnodes);
-	for(int i=0; i<inst->nnodes; i++)
-	{
-		fprintf(file, "%lf %lf\n", inst->xcoord[i], inst->ycoord[i]);
-	}
-
-	fprintf(file, "\nNON ZERO VARIABLES\n");
-	// print the x variables that are non-zero
-	for(int k = 0; k < max_idx_x; k++)
-	{	
-		if(inst->best_sol[k] > TOLERANCE)
-		{
-			int l = inst->nnodes -1;
-			int flag = 0;
-			for(int i=0; (i<inst->nnodes-1) && (!flag); i++)
-			{
-				if(k<l)
-				{
-					for(int j=i+1; j<inst->nnodes; j++)
-					{
-						if(xpos(i, j, inst) == k) 
-						{
-							fprintf(file, "x_%d_%d = %f\n", i+1, j+1, inst->best_sol[k]);
-							flag = 1;
-							break;
-						}
-					}
-				}
-				else
-				{
-					l += inst->nnodes-i-2; 
-				}
-			}
-		}
-	}	
-	fclose(file);
+	*/
 }
 
 void read_input(instance *inst)
 {
 	FILE *fin = fopen(inst->input_file, "r");
-	if(fin == NULL) print_error("input file not found!");
+    if(fin == NULL) print_error("input file not found!");
 
-	if(!strncmp(inst->model_type, "NULL", 4))
-		print_error("model type not specified!");
-	inst->nnodes = -1;
+    if(!strncmp(inst->model_type, "NULL", 4))
+    	print_error("model type not specified!");
+    inst->nnodes = -1;
+    inst->nhosp = -1;
 
-	char line[LINE_LENGTH];
+    char line[LINE_LENGTH];
+    
+    char *par_name;   
+    char *token1;
+    char *token2;
+    char *token3;
+    
+    int active_section = 0; // =1 NODE_COORD_SECTION, =2 DEMAND_SECTION, =3 DEPOT_SECTION 
+    
+    int do_print = (VERBOSE >= 1000);
 	
-	char *par_name;   
-	char *token1;
-	char *token2;
-	
-	int active_section = 0; // =1 NODE_COORD_SECTION, =2 DEMAND_SECTION, =3 DEPOT_SECTION 
-	
-	int do_print = (VERBOSE >= 1000);
-	
-	while(fgets(line, sizeof(line), fin) != NULL) 
+    while(fgets(line, sizeof(line), fin) != NULL) 
 	{
-		if(VERBOSE >= 2000) { printf("%s",line); fflush(NULL); }
+		if(VERBOSE >= 2000) {
+			printf("%s", line); 
+			fflush(NULL);
+		}
 		if(strlen(line) <= 1) continue; // skip empty lines
 		par_name = strtok(line, " :");
-		if(VERBOSE >= 3000) { printf("parameter \"%s\"", par_name); fflush(NULL); }
+		if(VERBOSE >= 3000) {
+			printf("parameter \"%s\"\n", par_name); fflush(NULL); 
+		}
 
 		if(!strncmp(par_name, "NAME", 4)) 
 		{
@@ -513,27 +295,35 @@ void read_input(instance *inst)
 		{
 			active_section = 0;   
 			token1 = strtok(NULL, "");  
-			// if(VERBOSE >= 10) printf(" ... solving instance %s with model %d\n\n", token1, inst->model_type);
-			continue;
-		}
-
-		if(!strncmp(par_name, "TYPE", 4)) 
-		{
-			token1 = strtok(NULL, " :");  
-			if(strncmp(token1, "TSP", 3)) print_error(" format error:  only TYPE == TSP implemented so far!"); 
-			active_section = 0;
 			continue;
 		}
 
 		if(!strncmp(par_name, "DIMENSION", 9)) 
 		{
-			if(inst->nnodes >= 0) print_error(" repeated DIMENSION section in input file");
+			if(inst->nnodes >= 0) 
+				print_error(" repeated DIMENSION section in input file");
 			token1 = strtok(NULL, " :");
 			inst->nnodes = atoi(token1);
-			if(do_print) printf(" ... nnodes %d\n", inst->nnodes); 
-			// inst->demand = (double *) calloc(inst->nnodes, sizeof(double)); 	 
-			inst->xcoord = (double *) calloc(inst->nnodes, sizeof(double)); 	 
-			inst->ycoord = (double *) calloc(inst->nnodes, sizeof(double));    
+			if(do_print) 
+				printf(" ... nnodes %d\n", inst->nnodes); 
+			inst->x_nodes = (double *) calloc(inst->nnodes, sizeof(double)); 	 
+			inst->y_nodes = (double *) calloc(inst->nnodes, sizeof(double));    
+			inst->r_nodes = (double *) calloc(inst->nnodes, sizeof(double));    
+			active_section = 0;  
+			continue;
+		}
+
+		if(!strncmp(par_name, "NUMBER_HOSPITALS", 15)) 
+		{
+			if(inst->nhosp >= 0) 
+				print_error(" repeated NUMBER_HOSPITALS section in input file");
+			token1 = strtok(NULL, " :");
+			inst->nhosp = atoi(token1);
+			if(do_print) 
+				printf(" ... nhosp %d\n", inst->nhosp); 
+			inst->x_hosp = (double *) calloc(inst->nhosp, sizeof(double)); 	 
+			inst->y_hosp = (double *) calloc(inst->nhosp, sizeof(double));    
+			inst->c_hosp = (double *) calloc(inst->nhosp, sizeof(double));    
 			active_section = 0;  
 			continue;
 		}
@@ -542,6 +332,11 @@ void read_input(instance *inst)
 		{
 			token1 = strtok(NULL, " :");
 			if(!strncmp(token1, "EUC_2D", 6))
+			{
+				inst->dist_type = (char *) calloc(strlen(token1)+1, sizeof(char));
+				strcpy(inst->dist_type, token1);
+			}
+			else if(!strncmp(token1, "CEIL_2D", 7))
 			{
 				inst->dist_type = (char *) calloc(strlen(token1)+1, sizeof(char));
 				strcpy(inst->dist_type, token1);
@@ -558,7 +353,7 @@ void read_input(instance *inst)
 			}
 			else
 			{
-				print_error(" format error:  only ATT, EUC_2D and GEO distances implemented so far!");
+				print_error(" format error:  only ATT, EUC_2D, CEIL_2D and GEO distances implemented so far!");
 			}
 			active_section = 0;
 			continue;
@@ -581,7 +376,13 @@ void read_input(instance *inst)
 			continue;
 		}
 
-		// DA CHIEDERE ANCHE GLI ALTRI if SE POSSONO SERVIRE E PERCHÉ
+		if(!strncmp(par_name, "HOSPITALS_COORD_SECTION", 23))
+		{
+			if(inst->nhosp <= 0) 
+				print_error(" ... NUMBER_HOSPITAL section should appear before NODE_COORD_SECTION section");
+			active_section = 2;
+			continue;
+		}
 
 		if(!strncmp(par_name, "EOF", 3)) 
 		{
@@ -591,15 +392,33 @@ void read_input(instance *inst)
 
 		if(active_section == 1) // within NODE_COORD_SECTION
 		{
-			int i = atoi(par_name) - 1; 
+			int i = atoi(par_name) - 1;
 			if(i < 0 || i >= inst->nnodes)
-				print_error(" ... unknown node in NODE_COORD_SECTION section");     
+				print_error(" ... unknown node in NODE_COORD_SECTION");     
 			token1 = strtok(NULL, " :,");
 			token2 = strtok(NULL, " :,");
-			inst->xcoord[i] = atof(token1);
-			inst->ycoord[i] = atof(token2);
+			token3 = strtok(NULL, " :,");
+			inst->x_nodes[i] = atof(token1);
+			inst->y_nodes[i] = atof(token2);
+			inst->r_nodes[i] = atof(token3);
 			if(do_print)
-				printf(" ... node %d at coordinates ( %.f , %f )\n", i+1, inst->xcoord[i], inst->ycoord[i]); 
+				printf(" ... node %d at coordinates ( %f , %f ) with request %f\n", i+1, inst->x_nodes[i], inst->y_nodes[i], inst->r_nodes[i]); 
+			continue;
+		}
+
+		if(active_section == 2) // within HOSPITALS_COORD_SECTION
+		{
+			int i = atoi(par_name) - 1; 
+			if(i < 0 || i >= inst->nnodes)
+				print_error(" ... unknown node in HOSPITALS_COORD_SECTION");     
+			token1 = strtok(NULL, " :,");
+			token2 = strtok(NULL, " :,");
+			token3 = strtok(NULL, " :,");
+			inst->x_hosp[i] = atof(token1);
+			inst->y_hosp[i] = atof(token2);
+			inst->c_hosp[i] = atof(token3);
+			if(do_print)
+				printf(" ... hospital %d at coordinates ( %f , %f ) with capacity %f\n", i+1, inst->x_hosp[i], inst->y_hosp[i], inst->c_hosp[i]); 
 			continue;
 		}
 
@@ -607,50 +426,4 @@ void read_input(instance *inst)
 		print_error(" ... wrong format for the current simplified parser!!!!!!!!!");
 	}
 	fclose(fin);
-}
-
-double tour_dist(instance *inst, int *v)
-{
-	double d = 0;
-	int vsize = inst->nnodes;
-	for(int i = 0; i < vsize; i++)
-		d += dist(v[i], v[(i+1)%vsize], inst);
-
-	return d;
-}
-
-int xpos(int i, int j, instance *inst)
-{
-	if(i==j)
-	{
-		print_error("Error: i==j");
-	}
-	if((i >= inst->nnodes) || (j >= inst->nnodes) || (i<0) || (j<0))
-	{
-		print_error("Domain contraint not respected");
-	}
-	if(i > j)
-	{
-		return xpos(j, i, inst);
-	}
-	return (i * inst->nnodes + j - (i+1)*(i+2)/2);
-}
-
-int xpos_mtz(int i, int j, instance *inst)
-{
-	if((i >= inst->nnodes) || (j >= inst->nnodes) || (i<0) || (j<0))
-	{
-		print_error("Domain contraint not respected");
-	}
-	return (i*inst->nnodes + j);
-}
-
-int zpos_compact_custom(int i, int j, instance *inst)
-{
-	if((i >= inst->nnodes) || (j >= inst->nnodes) || (i<0) || (j<0))
-	{
-		print_error("Domain contraint not respected zpos_compact_custom");
-	}
-	int offset = inst->nnodes*(inst->nnodes-1)/2;
-	return (offset + (i*inst->nnodes + j));
 }
