@@ -22,13 +22,13 @@ int main(int argc, char **argv)
 	// char *str = strcat(strcpy(file_to_plot, inst.input_file), "_to_plot");
 
 	/***** TSP WITH SUBTOUR *****/
-	if(!strncmp(inst.model_type, "flow", 4))
+	if(!strcmp(inst.model_type, "flow"))
 	{
-		if(TSPopt(&inst))
-			print_error(" error within TSPopt()");
+		if(flow_opt(&inst))
+			print_error(" error within flow_opt()");
 	}
 
-	print_plot(&inst, "plot_file.txt");
+	//print_plot(&inst, "plot_file.txt");
 
 	free_instance(&inst);
 

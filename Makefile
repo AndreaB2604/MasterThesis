@@ -13,8 +13,9 @@ WARN = -g -Wall -Wpedantic -fsanitize=address -Wextra
 #-Wall -g
 TARGET = main
 
-SRCDIR = src
-BINDIR = bin
+SRC_DIR = src
+BUILD_DIR = build
+BIN_DIR = bin
 
 CPLEX_128 = /opt/ibm/ILOG/CPLEX_Studio128
 CPLEX_129 = /opt/ibm/ILOG/CPLEX_Studio129
@@ -33,8 +34,8 @@ endif
 INCL = -I $(CPLEX_LOC)
 LIBS = -L ${LIB_LOC}  -lcplex -lm -lpthread -ldl
 
-FILES = $(wildcard $(SRCDIR)/*.c) #this function lists all .c files
-OBJECTS = $(patsubst $(SRCDIR)/%.c, $(BINDIR)/%.o, $(FILES)) #substitute file.c -> file.o
+SRC_FILES = $(wildcard $(SRC_DIR)/*.c) #this function lists all .c files
+OBJ_FILES = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC_FILES)) #substitute file.c -> file.o
 
 current_dir = $(shell pwd)
 
@@ -42,22 +43,27 @@ current_dir = $(shell pwd)
 CFLAGS = #
 #-O3 -pipe -DNDEBUG -Wimplicit -Wparentheses -Wsequence-point -Wreturn-type -Wcast-qual -Wall -Wno-unknown-pragmas -Wno-long-long   -DCBC_BUILD
 
-all: $(TARGET)
+.PHONY: createdir all clean again
 
-$(TARGET):$(OBJECTS)
-	$(CC) $(WARN) $(OBJECTS) -o $(TARGET) $(LIBS) $(CFLAGS)
+all: createdir $(TARGET)
 
-$(BINDIR)/%.o: $(SRCDIR)/%.c
+$(TARGET):$(OBJ_FILES)
+	$(CC) $(WARN) $(OBJ_FILES) -o $(TARGET) $(LIBS) $(CFLAGS)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(WARN) -c -o $@ $< $(INCL) $(LIBS) $(CFLAGS)
 
 clean:
-	$(RMF) $(BINDIR)/*.o
+	$(RMF) $(BUILD_DIR)/*.o
 	$(RMF) $(TARGET)
 	$(RMF) *.lp
 	$(RMF) *.mps
 	$(RMF) *.sav
 	$(RMF) *.log
 	$(RMF) *.txt
+
+createdir:
+	mkdir -p build
 
 again:
 	make clean

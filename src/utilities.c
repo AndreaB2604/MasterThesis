@@ -24,8 +24,8 @@ double dist(int i, int j, instance *inst)
 
 double dist_att(int i, int j, instance *inst)
 {
-	double dx = inst->x_nodes[i] - inst->x_hosp[j];
-	double dy = inst->y_nodes[i] - inst->y_hosp[j];
+	double dx = inst->x_hosp[i] - inst->x_nodes[j];
+	double dy = inst->y_hosp[i] - inst->y_nodes[j];
 
 	double rij = sqrt((dx*dx + dy*dy) / 10.0);
 	double tij = (int) (rij + 0.5);
@@ -38,16 +38,16 @@ double dist_att(int i, int j, instance *inst)
 
 double dist_euc2D(int i, int j, instance *inst)
 {
-	double dx = inst->x_nodes[i] - inst->x_hosp[j];
-	double dy = inst->y_nodes[i] - inst->y_hosp[j];
+	double dx = inst->x_hosp[i] - inst->x_nodes[j];
+	double dy = inst->y_hosp[i] - inst->y_nodes[j];
 	double dis = sqrt(dx*dx + dy*dy);
 	return dis;
 }
 
 double dist_ceil2D(int i, int j, instance *inst)
 {
-	double dx = inst->x_nodes[i] - inst->x_hosp[j];
-	double dy = inst->y_nodes[i] - inst->y_hosp[j];
+	double dx = inst->x_hosp[i] - inst->x_nodes[j];
+	double dy = inst->y_hosp[i] - inst->y_nodes[j];
 	int dis = ceil(sqrt(dx*dx + dy*dy)); // ceiling
 	return ((double) dis);
 }

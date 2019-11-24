@@ -1,76 +1,122 @@
 #include "flow.h"
 
-void build_model(instance *inst, CPXENVptr env, CPXLPptr lp)
-{	
-	/*
-	char binary = 'B';
+void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 
-	char **cname = (char **) calloc(1, sizeof(char *));		// (char **) required by cplex...
-	cname[0] = (char *) calloc(100, sizeof(char));
+	char continuous = 'C';
 
-	for(int i = 0; i < inst->nnodes; i++)
-	{
-		for(int j = i+1; j < inst->nnodes; j++ )
-		{
+	char *cname = (char *) calloc(100, sizeof(char));
+
+	// add the y variables to the objective function
+	for(int i = 0; i < inst->nhosp; i++) {
+		
+		sprintf(cname, "y_%d", (i+1));
+		double obj = 1.0;
+		double lb = 0.0;  
+		double ub = inst->c_hosp[i];
+		
+		if(VERBOSE > 1000) {
+			printf("The variable %s number %d has value %lf\n", cname, i, obj);
+		}
+		if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &continuous, &cname)) {
+			print_error(" wrong CPXnewcols on y variables");
+		}
+		if(CPXgetnumcols(env,lp)-1 != i) {
+			print_error(" wrong position for y variables");
+		}
+	}
+
+	// add the x variables to the objective function
+	for(int i = 0; i < inst->nhosp; i++) {
+		for(int j = 0; j < inst->nnodes; j++) {
 			// Adding variables to model + their respective cost in the
 			// objective function
-			sprintf(cname[0], "x_%d_%d", i+1,j+1);
-			double obj = dist(i,j,inst);
+			sprintf(cname, "x_%d_%d", i+1,j+1);
+			double obj = 0.0;
 			double lb = 0.0;  
-			double ub = 1.0; // recall we deal with {0,1} variables
+			double ub = CPX_INFBOUND;
 
-			if(VERBOSE > 1000)
-			{
-				printf("The variable %s number %d has value %lf\n", cname[0], xpos(i,j,inst), obj);
+			if(VERBOSE > 1000) {
+				printf("The variable %s number %d has value %lf\n", cname, xpos_flow(i, j, inst)+1, obj);
 			}
-			if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &binary, cname)) 
-			{
+			if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &continuous, &cname)) {
 				print_error(" wrong CPXnewcols on x var.s");
 			}
-			if(CPXgetnumcols(env,lp)-1 != xpos(i,j, inst))
-			{
+			if(CPXgetnumcols(env,lp)-1 != xpos_flow(i, j, inst)) {
 				print_error(" wrong position for x var.s");
 			}
 		}
 	}
 	
-	for(int h = 0; h < inst->nnodes; h++)  
-	{
-		// Adding the constraint that each node has to have 2 adjacent edges selected
+	// add the request satisfiability constraint for each node
+	for(int j = 0; j < inst->nnodes; j++) {
+		
 		int lastrow = CPXgetnumrows(env, lp);
-		double rhs = 2.0;
-		char sense = 'E';
-		sprintf(cname[0], "deg(%d)", h+1);   
-		if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, cname)) 
-		{
+		double rhs = inst->r_nodes[j];
+		char sense = 'G';
+		sprintf(cname, "request(%d)", j+1);   
+		if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
 			print_error(" wrong CPXnewrows [x1]");
+
+		for(int i = 0; i < inst->nhosp; i++) {
+			if(CPXchgcoef(env, lp, lastrow, xpos_flow(i, j, inst), 1.0)) 
+				print_error(" wrong CPXchgcoef request contraint");
 		}
-		for(int i = 0; i < inst->nnodes; i++)
-		{
-			if(i==h) { continue; }
-			if(CPXchgcoef(env, lp, lastrow, xpos(h, i, inst), 1.0)) 
-			{
-				print_error(" wrong CPXchgcoef [x1]");
+	}
+
+	// add the constraint of fraction of requests served by each hospital
+	for(int i = 0; i < inst->nhosp; i++) {
+		int lastrow = CPXgetnumrows(env, lp);
+		double k = 100.0;
+		double rhs = 0.0;
+		char sense = 'G';
+		sprintf(cname, "requests_served(%d)", i+1);
+		if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
+			print_error(" wrong CPXnewrows [x1]");
+		
+		// change the coefficient for the single y_i
+		if(CPXchgcoef(env, lp, lastrow, i, k)) 
+			print_error(" wrong CPXchgcoef fraction of requests contraint");
+		
+		// change the coefficient for the x_i_j
+		for(int j = 0; j < inst->nnodes; j++) {
+			if(CPXchgcoef(env, lp, lastrow, xpos_flow(i, j, inst), -1.0)) 
+				print_error(" wrong CPXchgcoef fraction of requests contraint");
+		}
+	}
+
+	// add the constraint of infeasibility of all the x pairs
+	for(int i = 0; i < inst->nhosp; i++) {
+		for(int j = 0; j < inst->nnodes; j++) {
+			if(dist(i, j, inst) > MAX_DISTANCE) {
+				int lastrow = CPXgetnumrows(env, lp);
+				double rhs = 0.0;
+				char sense = 'E';
+				sprintf(cname, "non_reachability(x_%d_%d)", i+1, j+1);
+				if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
+					print_error(" wrong CPXnewrows [x1]");
+
+				// change the coefficient for the single y_i
+				if(CPXchgcoef(env, lp, lastrow, xpos_flow(i, j, inst), 1.0)) 
+					print_error(" wrong CPXchgcoef infeasibility contraint");
 			}
 		}
 	}
-	free(cname[0]);
+
+
 	free(cname);
-	*/
 }
 
-int TSPopt(instance *inst)
+int flow_opt(instance *inst)
 {
 	// open cplex model
-	/*
 	int error;
 	int cur_numcols;
 	double obj_val;
 
 	CPXENVptr env = CPXopenCPLEX(&error);
-	// CPXsetintparam(env, CPXPARAM_Read_DataCheck, 1);			// used to check if there are errors while reading data
+	CPXsetintparam(env, CPXPARAM_Read_DataCheck, 1);			// used to check if there are errors while reading data
 	CPXsetintparam(env, CPXPARAM_RandomSeed, inst->random_seed);
-	CPXLPptr lp = CPXcreateprob(env, &error, "TSP"); 
+	CPXLPptr lp = CPXcreateprob(env, &error, "AMBULANCE FLOW"); 
 	
 	if(VERBOSE > 50)
 	{
@@ -83,14 +129,12 @@ int TSPopt(instance *inst)
 	// save model
 	if(VERBOSE >= 100)
 	{
-		CPXwriteprob(env, lp, "tsp.lp", NULL); 
+		CPXwriteprob(env, lp, "flow.lp", NULL); 
 	}
 
 	// solve the optimisation problem
 	if(CPXmipopt(env, lp))
-	{
 		print_error("Optimisation failed in TSPopt()");
-	}
  
 	cur_numcols = CPXgetnumcols(env, lp);
 	
@@ -101,43 +145,20 @@ int TSPopt(instance *inst)
 		print_error("Failure to read the optimal solution in CPXgetx()");
 	}
 
-	// print only the non-zero variables
-	if(VERBOSE > 50)
-	{
-		for(int k = 0; k < cur_numcols; k++)
-		{	
-			if(inst->best_sol[k] > TOLERANCE)
-			{
-				int l = inst->nnodes -1;
-				int flag = 0;
-				for(int i=0; (i<inst->nnodes-1) && (!flag); i++)
-				{
-					if(k<l)
-					{
-						for(int j=i+1; j<inst->nnodes; j++)
-						{
-							if(xpos(i, j, inst) == k) 
-							{
-								printf("x_%d_%d = %f\n", i+1, j+1, inst->best_sol[k]);
-								flag = 1;
-								break;
-							}
-						}
-					}
-					else
-					{
-						l += inst->nnodes-i-2; 
-					}
-				}
-			}
-		}
-	}
+	// print the solution
+	// print the y variables
+	for(int i = 0; i < inst->nhosp; i++)
+		printf("y_%d = %f\n", i+1, inst->best_sol[i]);
+
+	// print the x variables
+	for(int i = 0; i < inst->nhosp; i++)
+		for(int j = 0; j < inst->nnodes; j++)
+			printf("x_%d_%d = %f\n", i+1, j+1, inst->best_sol[xpos_flow(i, j, inst)]);
 
 	// get the best solution and print it
 	if(CPXgetobjval(env, lp, &obj_val))
-	{
 		print_error("Failure to read the value of the optimal solution in CPXgetobjval()");
-	}
+
 	printf("\nSolution value  = %lf\n", obj_val);
 
 	// Free up the problem as allocated by CPXcreateprob, if necessary
@@ -151,25 +172,11 @@ int TSPopt(instance *inst)
 	{
 		CPXcloseCPLEX(&env);
 	}
-	*/
 
 	return 0;
 }
 
 
-int xpos(int i, int j, instance *inst)
-{
-	if(i==j)
-	{
-		print_error("Error: i==j in xpos()");
-	}
-	if((i >= inst->nnodes) || (j >= inst->nnodes) || (i<0) || (j<0))
-	{
-		print_error("Domain contraint not respected");
-	}
-	if(i > j)
-	{
-		return xpos(j, i, inst);
-	}
-	return (i * inst->nnodes + j - (i+1)*(i+2)/2);
+int xpos_flow(int i, int j, instance *inst) {
+	return (inst->nhosp + inst->nnodes*i + j);
 }

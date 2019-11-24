@@ -49,6 +49,9 @@
 *.hex
 main
 
+# Directories
+build/
+
 # Debug files
 *.dSYM/
 *.su
