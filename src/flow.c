@@ -3,6 +3,7 @@
 void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 
 	char continuous = 'C';
+	//char integer = 'I';
 
 	char *cname = (char *) calloc(100, sizeof(char));
 
@@ -145,15 +146,8 @@ int flow_opt(instance *inst)
 		print_error("Failure to read the optimal solution in CPXgetx()");
 	}
 
-	// print the solution
-	// print the y variables
-	for(int i = 0; i < inst->nhosp; i++)
-		printf("y_%d = %f\n", i+1, inst->best_sol[i]);
-
-	// print the x variables
-	for(int i = 0; i < inst->nhosp; i++)
-		for(int j = 0; j < inst->nnodes; j++)
-			printf("x_%d_%d = %f\n", i+1, j+1, inst->best_sol[xpos_flow(i, j, inst)]);
+	if(VERBOSE >= 1000)
+		print_plot(inst, NULL);
 
 	// get the best solution and print it
 	if(CPXgetobjval(env, lp, &obj_val))

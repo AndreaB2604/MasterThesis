@@ -5,7 +5,8 @@
 double dist_att(int i, int j, instance *inst);
 double dist_ceil2D(int i, int j, instance *inst);
 double dist_euc2D(int i, int j, instance *inst);
-void print_plot_subtour(instance *inst, char *plot_file_name);
+void print_header_flow(instance *inst, FILE *file);
+void print_sol_flow(instance *inst, char *plot_file_name);
 
 double dist(int i, int j, instance *inst)
 {
@@ -15,8 +16,7 @@ double dist(int i, int j, instance *inst)
 		return dist_ceil2D(i, j, inst);
 	else if(!strncmp(inst->dist_type, "ATT", 3))
 		return dist_att(i, j, inst);
-	else
-	{
+	else {
 		print_error(" format error:  only ATT, CEIL_2D and EUC_2D distances implemented so far!");
 		return -1;
 	}
@@ -199,57 +199,53 @@ void print_error(const char *err)
 	exit(1);
 }
 
+void print_header_flow(instance *inst, FILE *file) {
+	fprintf(file, "NAME : SOLUTION_FLOW\n");
+	fprintf(file, "DIMENSION : %d\n", inst->nnodes);
+	fprintf(file, "NUMBER_HOSPITALS : %d\n", inst->nhosp);
+	fprintf(file, "EDGE_WEIGHT_TYPE : %s", inst->dist_type);
+	fprintf(file, "COMMENT : FOR POINTS (n_point x_coord y_coord request)\n");
+	fprintf(file, "COMMENT : FOR HOSPITALS (n_point x_coord y_coord max_capacity)\n");
+	fprintf(file, "NODE_COORD_SECTION\n");
+
+	for(int i = 0; i < inst->nnodes; i++)
+		fprintf(file, "%d %f %f\n", i+1, inst->x_nodes[i], inst->y_nodes[i]);
+
+	fprintf(file, "\nHOSPITALS_COORD_SECTION\n");
+	for(int i = 0; i < inst->nhosp; i++)
+		fprintf(file, "%d %f %f\n", i+1, inst->x_hosp[i], inst->y_hosp[i]);
+}
+
 void print_plot(instance *inst, char *plot_file_name)
 {
 	if(!strncmp(inst->model_type, "flow", 4))
-		print_plot_subtour(inst, plot_file_name);
+		print_sol_flow(inst, plot_file_name);
 	else 
 		print_error(" format error: plot non supported in print_plot()!");
 }
 
-void print_plot_subtour(instance *inst, char *plot_file_name)
+void print_sol_flow(instance *inst, char *plot_file_name)
 {
-	/*
-	int i, j, k, l, flag;
-	int cur_numcols = xpos(inst->nnodes-2, inst->nnodes-1, inst)+1; // this is equal to n*(n-1)/2
-	FILE *file = fopen(plot_file_name, "w");
-	fprintf(file, "%d\n", inst->nnodes);
-	for(i=0; i<inst->nnodes; i++)
-	{
-		fprintf(file, "%lf %lf\n", inst->xcoord[i], inst->ycoord[i]);
-	}
-	
-	fprintf(file, "\nNON ZERO VARIABLES\n");
+	FILE *file;
 
-	for(k=0; k<cur_numcols; k++)
-	{
-		if(inst->best_sol[k] > TOLERANCE)
-		{
-			l = inst->nnodes -1;
-			flag = 0;
-			for(i=0; (i<inst->nnodes-1) && (!(flag)); i++)
-			{
-				if(k<l)
-				{
-					for(j=i+1; j<inst->nnodes; j++)
-					{
-						if(xpos(i, j, inst) == k) 
-						{
-							fprintf(file, "x_%d_%d = %f\n", i+1, j+1, inst->best_sol[k]);
-							flag = 1;
-							break;
-						}
-					}
-				}
-				else
-				{
-					l += inst->nnodes-i-2; 
-				}
-			}	
-		}
-	}
+	if(plot_file_name == NULL)
+		file = stdout;
+	else
+		file = fopen(plot_file_name, "w");
+	
+	print_header_flow(inst, file);
+
+	fprintf(file, "\nSOLUTION\n");
+	for(int i = 0; i < inst->nhosp; i++)
+		fprintf(file, "y_%d = %f\n", i+1, inst->best_sol[i]);
+	
+	// print the x variables
+	for(int i = 0; i < inst->nhosp; i++)
+		for(int j = 0; j < inst->nnodes; j++)
+			if(fabs(inst->best_sol[xpos_flow(i, j, inst)]) > DOUBLE_TOL)
+				fprintf(file, "x_%d_%d = %f\n", i+1, j+1, inst->best_sol[xpos_flow(i, j, inst)]);
+
 	fclose(file);
-	*/
 }
 
 void read_input(instance *inst)

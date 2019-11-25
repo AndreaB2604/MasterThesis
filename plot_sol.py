@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def init_points(file, n, x, y):
 	line = file.readline()
-	while(line.strip() != "SERVICE_POINTS_SECTION"):
+	while(line.strip() != "NODE_COORD_SECTION"):
 		line = file.readline()
 	for i in range(n):
 		line = file.readline()
@@ -14,7 +14,7 @@ def init_points(file, n, x, y):
 
 def init_hospital(file, n, x, y):
 	line = file.readline()
-	while(line.strip() != "HOSPITALS_POINTS_SECTION"):
+	while(line.strip() != "HOSPITALS_COORD_SECTION"):
 		line = file.readline()
 	for i in range(n):
 		line = file.readline()
@@ -37,6 +37,7 @@ def plot_grid(px, py, hx, hy):
 	plt.scatter(px, py, color='blue', label='Service points')
 	# draw the hospitals points in yellow
 	plt.scatter(hx, hy, color='yellow', label='Hospitals')
+	print(hy[0:3])
 	plt.grid(True, linewidth=0.25)
 
 	# set the legend outside the plot

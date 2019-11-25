@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 			print_error(" error within flow_opt()");
 	}
 
-	//print_plot(&inst, "plot_file.txt");
+	print_plot(&inst, "solution_flow.txt");
 
 	free_instance(&inst);
 
