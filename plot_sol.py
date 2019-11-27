@@ -1,31 +1,92 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import toyplot # pip install toyploy
+import networkx as nx
 
-def init_points(file, n, x, y):
+import toyplot.pdf
+
+def init_nodes(file, p_coord):
 	line = file.readline()
 	while(line.strip() != "NODE_COORD_SECTION"):
 		line = file.readline()
-	for i in range(n):
+	for i in range(p_coord.shape[0]):
 		line = file.readline()
 		chunks = line.split(" ")
-		x[i] = float(chunks[1])
-		y[i] = float(chunks[2])
+		x = float(chunks[1])
+		y = float(chunks[2])
+		p_coord[i] = [x, y]
 
-def init_hospital(file, n, x, y):
+
+def init_hospital(file, h_coord):
 	line = file.readline()
 	while(line.strip() != "HOSPITALS_COORD_SECTION"):
 		line = file.readline()
-	for i in range(n):
+	for i in range(h_coord.shape[0]):
 		line = file.readline()
 		chunks = line.split(" ")
-		x[i] = float(chunks[1])
-		y[i] = float(chunks[2])
+		x = float(chunks[1])
+		y = float(chunks[2])
+		h_coord[i] = [x, y]
 
+def init_edges(file, edges, weights, h_weight):
+	line = file.readline()
+	while(line.strip() != "SOLUTION"):
+		line = file.readline()
+	for i in range(h_weight.shape[0]):
+		line = file.readline()
+		chunks = line.split(" ")
+		h_weight[i] = chunks[2]
 
-def plot_grid(px, py, hx, hy):
-	fig = plt.figure()
+	while(len(line) != 0):
+		line = file.readline()
+		if line.rstrip():
+			chunks = line.split(" ")
+			weight = float(chunks[2])
+			tmp = chunks[0].split("_")
+			w_edge = [int(tmp[1]), int(tmp[2])]
+			edges.append(w_edge)
+			weights.append(weight)
+	np_edges = np.array(edges)
+	#print(np_edges)
+	np_weights = np.array(weights)
+	#print(np_weights)
 
+def plot_graph(p_coord, edges, weights, h_coord, h_weight):
+
+	G = nx.Graph()
+
+	for i in range(p_coord.shape[0]):
+		pos = (p_coord[i][0], p_coord[i][1])
+		G.add_node(i+1+h_coord.shape[0], pos=pos)
+
+	for i in range(h_coord.shape[0]):
+		pos = (h_coord[i][0], h_coord[i][1])
+		G.add_node(i+1, pos=pos, color='red')
+
+	edges[:,1] = edges[:,1] + h_coord.shape[0]
+	weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], np.around(weights, decimals=2))))
+
+	print(weighted_edges)
+	G.add_weighted_edges_from(weighted_edges)
+
+	color_map = []
+	for node in G:
+		if node <= h_coord.shape[0]:
+			color_map.append('blue')
+		else: color_map.append('green')
+
+	pos = nx.get_node_attributes(G,'pos')    
+
+	#nx.draw(G, pos, node_color = color_map, node_size=60)
+	nx.draw_networkx_nodes(G, pos, node_color=color_map, node_size=60)
+	nx.draw_networkx_edges(G, pos)
+
+	labels = nx.get_edge_attributes(G,'weight')
+	nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4)
+
+	px = p_coord[:,0]
+	py = p_coord[:,1] 
 	x_unique = np.unique(px)
 	y_unique = np.unique(py)
 
@@ -33,42 +94,37 @@ def plot_grid(px, py, hx, hy):
 	plt.xticks(np.arange(0, np.ceil(np.amax(px)), x_unique[1]-x_unique[0]))
 	plt.yticks(np.arange(0, np.ceil(np.amax(py)), y_unique[1]-y_unique[0]))
 
-	# draw the service points in blue
-	plt.scatter(px, py, color='blue', label='Service points')
-	# draw the hospitals points in yellow
-	plt.scatter(hx, hy, color='yellow', label='Hospitals')
-	print(hy[0:3])
-	plt.grid(True, linewidth=0.25)
-
-	# set the legend outside the plot
-	plt.legend(bbox_to_anchor=(1.04, 1), loc='upper left')
-	
-	# scale correctly the axis
+	plt.axis('on')
+	plt.grid(True)
 	plt.gca().set_aspect('equal', adjustable='box')
-	plt.savefig('points_grid.pdf', format='pdf', bbox_inches='tight')
+	plt.show()
+
+	#plt.savefig("nodes.pdf", format='pdf', bbox_inches='tight')
 
 
 def main(toplot):
-	file = open(toplot,"r")
-	line = file.readline()
-	while (not(line.startswith("DIMENSION"))):
+	with open(toplot,"r") as file:
 		line = file.readline()
-	npoints = int(line.split(" ")[2])
-	
-	while (not(line.startswith("NUMBER_HOSPITAL"))):
-		line = file.readline()
-	nhosp = int(line.split(" ")[2])
+		while (not(line.startswith("DIMENSION"))):
+			line = file.readline()
+		npoints = int(line.split(" ")[2])
+		
+		while (not(line.startswith("NUMBER_HOSPITAL"))):
+			line = file.readline()
+		nhosp = int(line.split(" ")[2])
 
-	p_xcoord = np.zeros(npoints)
-	p_ycoord = np.zeros(npoints)
+		p_coord = np.zeros(shape=(npoints, 2))
 
-	h_xcoord = np.zeros(nhosp)
-	h_ycoord = np.zeros(nhosp)
+		h_coord = np.zeros(shape=(nhosp, 2))
+		h_weight = np.zeros(nhosp)
 
-	init_points(file, npoints, p_xcoord, p_ycoord)
-	init_hospital(file, nhosp, h_xcoord, h_ycoord)
-	plot_grid(p_xcoord, p_ycoord, h_xcoord, h_ycoord)
-			
+		edges = []
+		weights = []
+
+		init_nodes(file, p_coord)
+		init_hospital(file, h_coord)
+		init_edges(file, edges, weights, h_weight)
+		plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight)
 	
 if __name__ == '__main__':
 	main(sys.argv[1])
