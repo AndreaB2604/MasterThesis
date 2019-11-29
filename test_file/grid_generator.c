@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 		for(int i = 0; i < x_lim; i++) {
 			double x_coord = sqr_dim * (i + 0.5);
 			double y_coord = sqr_dim * (j + 0.5);
-			fprintf(file, "%d %f %f %f\n", (j*10+i+1), x_coord, y_coord, random_double(0, 10));
+			fprintf(file, "%d %f %f %f\n", (j*y_km+i+1), x_coord, y_coord, random_double(0, 10));
 		}
 
 	fprintf(file, "\nHOSPITALS_COORD_SECTION\n");
