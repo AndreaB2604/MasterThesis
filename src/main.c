@@ -7,8 +7,7 @@ int main(int argc, char **argv)
 
 	init_instance(&inst);
 	
-	if(argc < 2)
-	{
+	if(argc < 2) {
 		printf("Usage : %s -help for help\n", argv[0]);
 		exit(1);
 	}
@@ -22,8 +21,7 @@ int main(int argc, char **argv)
 	// char *str = strcat(strcpy(file_to_plot, inst.input_file), "_to_plot");
 
 	/***** TSP WITH SUBTOUR *****/
-	if(!strcmp(inst.model_type, "flow"))
-	{
+	if(!strcmp(inst.model_type, "flow")) {
 		if(flow_opt(&inst))
 			print_error(" error within flow_opt()");
 	}

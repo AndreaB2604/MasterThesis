@@ -257,6 +257,7 @@ void read_input(instance *inst)
     	print_error("model type not specified!");
     inst->nnodes = -1;
     inst->nhosp = -1;
+    inst->max_distance = -1;
 
     char line[LINE_LENGTH];
     
@@ -275,8 +276,11 @@ void read_input(instance *inst)
 			printf("%s", line); 
 			fflush(NULL);
 		}
-		if(strlen(line) <= 1) continue; // skip empty lines
+		if(strlen(line) <= 1) 
+			continue; // skip empty lines
+		
 		par_name = strtok(line, " :");
+		
 		if(VERBOSE >= 3000) {
 			printf("parameter \"%s\"\n", par_name); fflush(NULL); 
 		}
@@ -324,6 +328,18 @@ void read_input(instance *inst)
 			continue;
 		}
 
+		if(!strncmp(par_name, "MAX_DISTANCE", 12)) 
+		{
+			if(inst->max_distance >= 0)
+				print_error(" repeated MAX_DISTANCE section in input file");
+			token1 = strtok(NULL, " :");
+			inst->max_distance = atoi(token1);
+			if(do_print) 
+				printf(" ... max distance %f\n", inst->max_distance); 
+			active_section = 0;  
+			continue;
+		}
+
 		if(!strncmp(par_name, "EDGE_WEIGHT_TYPE", 16)) 
 		{
 			token1 = strtok(NULL, " :");
@@ -351,15 +367,6 @@ void read_input(instance *inst)
 			{
 				print_error(" format error:  only ATT, EUC_2D, CEIL_2D and GEO distances implemented so far!");
 			}
-			active_section = 0;
-			continue;
-		}
-
-		if(!strncmp(par_name, "DISPLAY_DATA_TYPE", 17))
-		{
-			token1 = strtok(NULL, " :");
-			if(strncmp(token1, "COORD_DISPLAY", 13) && strncmp(token1, "TWOD_DISPLAY", 12))
-				print_error(" format error: DYSPLAY_DATA_TYPE parameter not supported!");
 			active_section = 0;
 			continue;
 		}

@@ -31,7 +31,10 @@ def init_hospital(file, h_coord):
 def init_edges(file, edges, weights, h_weight):
 	line = file.readline()
 	while(line.strip() != "SOLUTION"):
+		if not(line):
+			return False
 		line = file.readline()
+
 	for i in range(h_weight.shape[0]):
 		line = file.readline()
 		chunks = line.split(" ")
@@ -46,10 +49,9 @@ def init_edges(file, edges, weights, h_weight):
 			w_edge = [int(tmp[1]), int(tmp[2])]
 			edges.append(w_edge)
 			weights.append(weight)
-	np_edges = np.array(edges)
-	np_weights = np.array(weights)
+	return True
 
-def plot_graph(p_coord, edges, weights, h_coord, h_weight):
+def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 
 	fig, ax = plt.subplots()
 
@@ -64,29 +66,27 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight):
 		pos = (h_coord[i][0], h_coord[i][1])
 		G.add_node(i+1, pos=pos)
 
-	edges[:,1] = edges[:,1] + nhosp
-	weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], np.around(weights, decimals=2))))
-	#print(weighted_edges)
+	if flag:
+		edges[:,1] = edges[:,1] + nhosp
+		weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], np.around(weights, decimals=2))))
 
-	G.add_weighted_edges_from(weighted_edges)
+		G.add_weighted_edges_from(weighted_edges)
 
-	edge_color_map = G.edges()
-	#print(edge_color)
-
-	edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
+		edge_color_map = G.edges()
+		edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
 
 	color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
-
 	color_map = np.array(color_map).astype(float)
-
+	
 	pos = nx.get_node_attributes(G, 'pos')
-
 	nx.draw_networkx_nodes(G, pos, node_size=60, node_color=color_map, cmap=mplcm.get_cmap("rainbow"), vmin=0.0, vmax=1.0)
-	nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("rainbow"), edge_vmin=0.0, edge_vmax=1.0)
+	
+	if flag:
+		nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("rainbow"), edge_vmin=0.0, edge_vmax=1.0)
 
-	labels = nx.get_edge_attributes(G,'weight')
-	weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
-	nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
+		labels = nx.get_edge_attributes(G,'weight')
+		weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
+		nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
 
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
@@ -126,8 +126,9 @@ def main(toplot):
 
 		init_nodes(file, p_coord)
 		init_hospital(file, h_coord)
-		init_edges(file, edges, weights, h_weight)
-		plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight)
+		flag = init_edges(file, edges, weights, h_weight)
+
+	plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight, flag)
 	
 if __name__ == '__main__':
 	main(sys.argv[1])

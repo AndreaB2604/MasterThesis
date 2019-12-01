@@ -88,7 +88,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 	// add the constraint of infeasibility of all the x pairs
 	for(int i = 0; i < inst->nhosp; i++) {
 		for(int j = 0; j < inst->nnodes; j++) {
-			if(dist(i, j, inst) > MAX_DISTANCE) {
+			if(dist(i, j, inst) > inst->max_distance) {
 				int lastrow = CPXgetnumrows(env, lp);
 				double rhs = 0.0;
 				char sense = 'E';

@@ -8,7 +8,7 @@ CC = gcc
 # 	
 #	-I <path> is needed to include cplex.h for example
 # -------------------------------------------------------------
-TARGET = grid_generator
+TARGET = inst_generator
 FILES=$(wildcard *.c) #this function lists all .c files
 OBJECTS=$(patsubst %.c, %.o, $(FILES)) #substitute file.c -> file.o
 current_dir = $(shell pwd)
