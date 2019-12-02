@@ -29,7 +29,8 @@ int main(int argc, char **argv) {
 		for(int i = 0; i < x_lim; i++) {
 			double x_coord = SQR_DIM * (i + 0.5);
 			double y_coord = SQR_DIM * (j + 0.5);
-			fprintf(file, "%d %f %f %f\n", (j*Y_KM+i+1), x_coord, y_coord, random_double(0, 10));
+			double request = random_double(0, 10);
+			fprintf(file, "%d %f %f %f\n", (j*Y_KM+i+1), x_coord, y_coord, request);
 		}
 
 	fprintf(file, "\nHOSPITALS_COORD_SECTION\n");
@@ -37,7 +38,8 @@ int main(int argc, char **argv) {
 	random_hospital_generator(hosp_points, HOSP_NUM, x_lim, y_lim, SQR_DIM);
 
 	for(int i = 0; i < HOSP_NUM; i++) {
-		fprintf(file, "%d %f %f %d\n", (i+1), hosp_points[i].x, hosp_points[i].y, ((int) random_int(5, 10)));
+		int h_capacity = random_int(5, 10);
+		fprintf(file, "%d %f %f %d\n", (i+1), hosp_points[i].x, hosp_points[i].y, h_capacity);
 	}
 
 	free(hosp_points);
@@ -62,20 +64,15 @@ void random_hospital_generator(point_2d *hosp_points, int HOSP_NUM, int x_lim, i
 }
 
 int contains(point_2d *list, int list_size, point_2d *a) {
-	for(int i = 0; i < list_size; i++) {
-		if(equals(&(list[i]), a)) {
-			printf("found equal point in contains\n");
+	for(int i = 0; i < list_size; i++)
+		if(equals(&(list[i]), a))
 			return 1;
-		}
-	}
 	return 0;
 }
 
 int equals(point_2d *a, point_2d *b) {
-	if((fabs(a->x - b->x) < DOUBLE_TOL) && (fabs(a->y - b->y) < DOUBLE_TOL)) {
-		printf("found equal point\n");
+	if((fabs(a->x - b->x) < DOUBLE_TOL) && (fabs(a->y - b->y) < DOUBLE_TOL))
 		return 1;
-	}
 	return 0;
 }
 

@@ -11,7 +11,7 @@
 #include <float.h>
 #include <limits.h>
 
-#define VERBOSE 10 // printing level  (=10 only incumbent, =20 little output, =50-60 good, =70 verbose, >=100 cplex log) 
+#define VERBOSE 50 // printing level  (=10 only incumbent, =20 little output, =50-60 good, =70 verbose, >=100 cplex log) 
 #define DOUBLE_TOL 10e-7
 
 typedef struct

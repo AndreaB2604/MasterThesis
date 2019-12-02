@@ -119,7 +119,7 @@ int flow_opt(instance *inst)
 	CPXsetintparam(env, CPXPARAM_RandomSeed, inst->random_seed);
 	CPXLPptr lp = CPXcreateprob(env, &error, "AMBULANCE FLOW"); 
 	
-	if(VERBOSE > 50)
+	if(VERBOSE >= 50)
 	{
 		CPXsetlogfilename(env, "exec_log.txt", "w");			// it saves the log of the computation in exec_compact_log.txt
 	}
