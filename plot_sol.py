@@ -74,6 +74,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 
 		edge_color_map = G.edges()
 		edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
+		print("Number of edges = ", edge_color_map.size)
 
 	color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
 	color_map = np.array(color_map).astype(float)

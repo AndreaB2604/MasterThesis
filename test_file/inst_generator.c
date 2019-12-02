@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 	random_hospital_generator(hosp_points, HOSP_NUM, x_lim, y_lim, SQR_DIM);
 
 	for(int i = 0; i < HOSP_NUM; i++) {
-		fprintf(file, "%d %f %f %d\n", (i+1), hosp_points[i].x, hosp_points[i].y, ((int) random_int(50, 100)));
+		fprintf(file, "%d %f %f %d\n", (i+1), hosp_points[i].x, hosp_points[i].y, ((int) random_int(5, 10)));
 	}
 
 	free(hosp_points);
