@@ -4,7 +4,7 @@
 int main(int argc, char **argv) {
 
 	const int X_KM = 10, Y_KM = 10;
-	const double SQR_DIM = 1;
+	const double SQR_DIM = 0.2;
 	const int HOSP_NUM = 4;
 	const int MAX_DISTANCE = 7;
 	
@@ -13,11 +13,11 @@ int main(int argc, char **argv) {
 
 	char *name = "SQUARE_GRID";
 	char *dist_type = "EUC_2D";
-	char *file_name = "grid100.flow";
+	char *file_name = "grid.flow";
 	FILE *file = fopen(file_name, "w+");
 
 	fprintf(file, "NAME : %s\n", name);
-	fprintf(file, "DIMENSION : %d\n", (X_KM*Y_KM));
+	fprintf(file, "DIMENSION : %d\n", x_lim*y_lim);
 	fprintf(file, "NUMBER_HOSPITALS : %d\n", HOSP_NUM);
 	fprintf(file, "MAX_DISTANCE : %d\n", MAX_DISTANCE);
 	fprintf(file, "EDGE_WEIGHT_TYPE : %s\n", dist_type);
@@ -25,17 +25,17 @@ int main(int argc, char **argv) {
 	fprintf(file, "COMMENT : FOR HOSPITALS (n_point x_coord y_coord max_capacity)\n");
 	fprintf(file, "NODE_COORD_SECTION\n");
 
-	for(int j = 0; j < y_lim; j++)
+	for(int j = 0, k = 1; j < y_lim; j++)
 		for(int i = 0; i < x_lim; i++) {
 			double x_coord = SQR_DIM * (i + 0.5);
 			double y_coord = SQR_DIM * (j + 0.5);
 			double request = random_double(0, 10);
-			fprintf(file, "%d %f %f %f\n", (j*Y_KM+i+1), x_coord, y_coord, request);
+			fprintf(file, "%d %f %f %f\n", k++, x_coord, y_coord, request);
 		}
 
 	fprintf(file, "\nHOSPITALS_COORD_SECTION\n");
 	point_2d *hosp_points = (point_2d *) calloc(HOSP_NUM, sizeof(point_2d));
-	random_hospital_generator(hosp_points, HOSP_NUM, x_lim, y_lim, SQR_DIM);
+	random_hospital_generator(hosp_points, HOSP_NUM, X_KM, Y_KM, SQR_DIM);
 
 	for(int i = 0; i < HOSP_NUM; i++) {
 		int h_capacity = random_int(5, 10);
@@ -47,13 +47,13 @@ int main(int argc, char **argv) {
 
 }
 
-void random_hospital_generator(point_2d *hosp_points, int HOSP_NUM, int x_lim, int y_lim, double SQR_DIM) {
+void random_hospital_generator(point_2d *hosp_points, int HOSP_NUM, int x_km, int y_km, double SQR_DIM) {
 
 	int i = 0;
 	while(i < HOSP_NUM) {
 		point_2d new_point;
-		new_point.x = random_int(0, x_lim) + SQR_DIM/2;
-		new_point.y = random_int(0, y_lim) + SQR_DIM/2;
+		new_point.x = random_int(0, x_km) + SQR_DIM/2;
+		new_point.y = random_int(0, y_km) + SQR_DIM/2;
 
 		if(!contains(hosp_points, i, &new_point)) {
 			hosp_points[i].x = new_point.x;

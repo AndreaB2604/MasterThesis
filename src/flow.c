@@ -3,7 +3,7 @@
 void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 
 	char continuous = 'C';
-	//char integer = 'I';
+	char integer = 'I';
 
 	char *cname = (char *) calloc(100, sizeof(char));
 
@@ -11,14 +11,14 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 	for(int i = 0; i < inst->nhosp; i++) {
 		
 		sprintf(cname, "y_%d", (i+1));
-		double obj = 1.0;
+		double obj = 10000.0;
 		double lb = 0.0;  
 		double ub = inst->c_hosp[i];
 		
 		if(VERBOSE > 1000) {
 			printf("The variable %s number %d has value %lf\n", cname, i, obj);
 		}
-		if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &continuous, &cname)) {
+		if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &integer, &cname)) {
 			print_error(" wrong CPXnewcols on y variables");
 		}
 		if(CPXgetnumcols(env,lp)-1 != i) {
@@ -32,7 +32,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 			// Adding variables to model + their respective cost in the
 			// objective function
 			sprintf(cname, "x_%d_%d", i+1,j+1);
-			double obj = 0.0;
+			double obj = dist(i, j, inst);
 			double lb = 0.0;  
 			double ub = CPX_INFBOUND;
 

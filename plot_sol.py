@@ -99,7 +99,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 	
-	plt.grid(True)
+	#plt.grid(True)
 	ax.set_axisbelow(True)
 	plt.gca().set_aspect('equal', adjustable='box')
 	plt.savefig("solution_flow.pdf", format='pdf', bbox_inches='tight')
