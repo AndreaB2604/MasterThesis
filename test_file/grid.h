@@ -20,10 +20,8 @@ typedef struct {
 /* PROTOTYPES */
 
 // defined in grid_generator.c
-int contains(point_2d *list, int list_size, point_2d *a);
-int equals(point_2d *a, point_2d *b);
 double random_double(double min, double max);
-void random_hospital_generator(point_2d *hosp_points, int hosp_num, int x_lim, int y_lim, double sqr_dim);
+void random_hospital_generator(point_2d *points_coord, long points_coord_size, point_2d *hosp_points, int HOSP_NUM);
 long random_int(long min, long max);
 
 
