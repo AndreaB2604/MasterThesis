@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as mplcm
 import matplotlib.colors as colors
@@ -69,22 +68,26 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 
 	if flag:
 		edges[:,1] = edges[:,1] + nhosp
+		weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], np.around(weights, decimals=2))))
 
-		G.add_edges_from(edges)
+		G.add_weighted_edges_from(weighted_edges)
 
 		edge_color_map = G.edges()
 		edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
 		print("Number of edges = ", edge_color_map.size)
 
-	node_color_map = ["orange" if i <=nhosp else "blue" for i in G.nodes()]
-	#node_color_map = np.array(node_color_map).astype(float)
+	color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
+	color_map = np.array(color_map).astype(float)
 	
 	pos = nx.get_node_attributes(G, 'pos')
-	node_size = p_coord.shape[0]/4
-	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=mplcm.get_cmap("Blues"), vmin=0.0, vmax=1.0)
+	nx.draw_networkx_nodes(G, pos, node_size=60, node_color=color_map, cmap=mplcm.get_cmap("rainbow"), vmin=0.0, vmax=1.0)
 	
 	if flag:
-		edges = nx.draw_networkx_edges(G, pos, edge_color=weights, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=math.floor(min(weights)), edge_vmax=math.ceil(max(weights)))
+		nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("rainbow"), edge_vmin=0.0, edge_vmax=1.0)
+
+		labels = nx.get_edge_attributes(G,'weight')
+		weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
+		nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
 
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
@@ -95,12 +98,6 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	plt.yticks(np.arange(0, np.ceil(np.amax(py)), y_unique[1]-y_unique[0]))
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
-
-	if flag:
-		norm = plt.Normalize(vmin=math.floor(min(weights)), vmax=math.ceil(max(weights)))
-		sm = plt.cm.ScalarMappable(cmap=mplcm.get_cmap("Blues"), norm=norm)
-		sm.set_array([])
-		plt.colorbar(sm)
 	
 	plt.grid(True)
 	ax.set_axisbelow(True)

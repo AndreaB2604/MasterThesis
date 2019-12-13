@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 		for(int i = 0; i < x_lim; i++) {
 			points_coord[k].x = SQR_DIM * (i + 0.5);
 			points_coord[k].y = SQR_DIM * (j + 0.5);
-			double request = random_double(0, 10);
+			double request = random_double(0, 1);
 			fprintf(file, "%d %f %f %f\n", k+1, points_coord[k].x, points_coord[k].y, request);
 			k++;
 		}
@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 	random_hospital_generator(points_coord, x_lim*y_lim, hosp_points, HOSP_NUM);
 
 	for(int i = 0; i < HOSP_NUM; i++) {
-		int h_capacity = random_int(5, 10);
+		int h_capacity = 1000;
 		fprintf(file, "%d %f %f %d\n", (i+1), hosp_points[i].x, hosp_points[i].y, h_capacity);
 	}
 
