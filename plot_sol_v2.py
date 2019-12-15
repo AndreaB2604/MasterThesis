@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as mplcm
 import matplotlib.colors as colors
@@ -55,6 +56,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 
 	fig, ax = plt.subplots()
 
+	npoints = p_coord.shape[0]
 	nhosp = h_coord.shape[0]
 	G = nx.Graph()
 
@@ -66,28 +68,42 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 		pos = (h_coord[i][0], h_coord[i][1])
 		G.add_node(i+1, pos=pos)
 
+	node_color_map = np.zeros(nhosp+npoints)
+	cmap = mplcm.get_cmap("Reds")
+
 	if flag:
+		# compute the weights of the nodes to initialize their color map
+		weighted_edges = np.transpose(np.vstack((edges[:,1], edges[:,0], np.around(weights, decimals=2))))
+
+		for i in range(weighted_edges.shape[0]):
+			idx = int(weighted_edges[i][0]) - 1
+			value = weighted_edges[i][2]
+			node_color_map[idx] = node_color_map[idx] + value
+		
+		#print(node_color_map[:npoints])
+
 		edges[:,1] = edges[:,1] + nhosp
-		weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], np.around(weights, decimals=2))))
 
-		G.add_weighted_edges_from(weighted_edges)
+		#print(weighted_edges)
 
-		edge_color_map = G.edges()
-		edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
-		print("Number of edges = ", edge_color_map.size)
+		G.add_edges_from(edges)
 
-	color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
-	color_map = np.array(color_map).astype(float)
+		#edge_color_map = G.edges()
+		#edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
+		print("Number of edges = ", edges.size)
+	else:
+		for i in range(nhosp):
+			node_color_map[npoints+i] = 1
+
+	#print(G.nodes())
+	#node_color_map = np.array(node_color_map).astype(float)
 	
 	pos = nx.get_node_attributes(G, 'pos')
-	nx.draw_networkx_nodes(G, pos, node_size=60, node_color=color_map, cmap=mplcm.get_cmap("rainbow"), vmin=0.0, vmax=1.0)
+	node_size = math.floor(npoints/4)
+	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=cmap, vmin=math.floor(min(node_color_map)), vmax=math.ceil(max(node_color_map)))
 	
 	if flag:
-		nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("rainbow"), edge_vmin=0.0, edge_vmax=1.0)
-
-		labels = nx.get_edge_attributes(G,'weight')
-		weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
-		nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
+		edges = nx.draw_networkx_edges(G, pos, edge_color="grey")
 
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
@@ -98,11 +114,17 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	plt.yticks(np.arange(0, np.ceil(np.amax(py)), y_unique[1]-y_unique[0]))
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+
+	if flag:
+		norm = plt.Normalize(vmin=math.floor(min(node_color_map[:npoints])), vmax=math.ceil(max(node_color_map[:npoints])))
+		sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+		sm.set_array([])
+		plt.colorbar(sm)
 	
 	plt.grid(True)
 	ax.set_axisbelow(True)
 	plt.gca().set_aspect('equal', adjustable='box')
-	plt.savefig("solution_weighted_flow.pdf", format='pdf', bbox_inches='tight')
+	plt.savefig("solution_flow.pdf", format='pdf', bbox_inches='tight')
 	plt.show()
 
 
