@@ -11,6 +11,7 @@
 
 # Pdf and txt files
 *.pdf
+!img_processing/*.pdf
 *.txt
 
 # Object files
