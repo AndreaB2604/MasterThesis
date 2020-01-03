@@ -12,12 +12,10 @@ def trunc_gauss(mu, sigma, bottom, top):
 		rand = int(random.gauss(mu, sigma))
 	return rand
 
-def interpolateImg(img_path):
+def interpolateImg(img_path, px_per_km):
 	np.set_printoptions(threshold = sys.maxsize)
 
 	image = cv2.imread(img_path)
-	#how many pixels represent 1 km in the image
-	px_per_km = 11
 	lowerbound = np.array([0, 0, 0])  # BGR-code of the lowest black
 	upperbound = np.array([30, 30, 30])   # BGR-code of the highest black 
 	mask = cv2.inRange(image, lowerbound, upperbound)  
@@ -56,16 +54,21 @@ def gaussPopulation(grid, population, mu, sigma):
 	max_y = max(grid[:,1])
 
 	grid_dict = {}
-	for x, y in grid:
-		grid_dict[(x, y)] = 0
 
-	for i in range(population):
+	# put at least one person in every square in the grid if the population is greater than the grid size
+	init_value = 1 if population > grid.shape[0] else 0
+	# adjust the number of point to generate based on how many are already present
+	npoints = population-grid.shape[0] if init_value == 1 else population
+	
+	for x, y in grid:
+		grid_dict[(x, y)] = init_value
+
+	for i in range(npoints):
 		point = (trunc_gauss(mu[0], sigma[0], min_x, max_x), trunc_gauss(mu[1], sigma[1], min_y, max_y))
 		while(not(point in grid_dict)):
 			point = (trunc_gauss(mu[0], sigma[0], min_x, max_x), trunc_gauss(mu[1], sigma[1], min_y, max_y))
 		grid_dict[point] = grid_dict[point] + 1
 	
-	#print(grid_dict)
 	return grid_dict
 
 def plotPopulation(grid_dict):
@@ -104,14 +107,17 @@ def plotPopulation(grid_dict):
 	fig.suptitle('Population distribution\nelev=0, azimut=180')
 	plt.savefig("pop_distribution_0_180.pdf", format='pdf', bbox_inches='tight')
 
-def main(img_path, population):
-	mu = (37, 33)
+
+def imgExtractRequest(img_path, mu, px_per_km, population):
+	grid = interpolateImg(img_path, px_per_km)
 	
-	grid = interpolateImg(img_path)
 	sigma = (max(grid[:,0])/2, max(grid[:,1])/2)
 	
 	grid_dict = gaussPopulation(grid, int(population), mu, sigma)
 	plotPopulation(grid_dict)
 
+
 if __name__ == '__main__':
-	main(sys.argv[1], sys.argv[2])
+	mu = (37, 33)
+	px_per_km = 11
+	imgExtractRequest(sys.argv[1], mu, px_per_km, sys.argv[2])
