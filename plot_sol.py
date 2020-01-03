@@ -70,21 +70,25 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	if flag:
 		edges[:,1] = edges[:,1] + nhosp
 
-		G.add_edges_from(edges)
+		weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], weights)))
+		G.add_weighted_edges_from(weighted_edges)
 
-		edge_color_map = G.edges()
-		edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
-		print("Number of edges = ", edge_color_map.size)
+		# create the edge color map based on the edge order of the graph
+		edge_color_map = []	
+		for (u, v) in G.edges():
+			w_u_v = list(G.get_edge_data(u, v).values())[0]
+			edge_color_map.append(w_u_v)
+
+		print(edge_color_map)
 
 	node_color_map = ["orange" if i <=nhosp else "blue" for i in G.nodes()]
-	#node_color_map = np.array(node_color_map).astype(float)
 	
 	pos = nx.get_node_attributes(G, 'pos')
 	node_size = p_coord.shape[0]/4
 	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=mplcm.get_cmap("Blues"), vmin=0.0, vmax=1.0)
 	
 	if flag:
-		edges = nx.draw_networkx_edges(G, pos, edge_color=weights, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=math.floor(min(weights)), edge_vmax=math.ceil(max(weights)))
+		edges = nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=math.floor(min(weights)), edge_vmax=math.ceil(max(weights)))
 
 	px = p_coord[:,0]
 	py = p_coord[:,1] 

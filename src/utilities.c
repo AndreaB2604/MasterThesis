@@ -5,6 +5,7 @@
 double dist_att(int i, int j, instance *inst);
 double dist_ceil2D(int i, int j, instance *inst);
 double dist_euc2D(int i, int j, instance *inst);
+double dist_euc2D_mod(int i, int j, instance *inst);
 void print_header_flow(instance *inst, FILE *file);
 void print_sol_flow(instance *inst, char *plot_file_name);
 
@@ -12,6 +13,8 @@ double dist(int i, int j, instance *inst)
 {
 	if(!strncmp(inst->dist_type, "EUC_2D", 6))
 		return dist_euc2D(i, j, inst);
+	else if(!strncmp(inst->dist_type, "MOD_EUC_2D", 10))
+		return dist_euc2D_mod(i, j, inst);
 	else if(!strncmp(inst->dist_type, "CEIL_2D", 7))
 		return dist_ceil2D(i, j, inst);
 	else if(!strncmp(inst->dist_type, "ATT", 3))
@@ -42,6 +45,16 @@ double dist_euc2D(int i, int j, instance *inst)
 	double dy = inst->y_hosp[i] - inst->y_nodes[j];
 	double dis = sqrt(dx*dx + dy*dy);
 	return dis;
+}
+
+double dist_euc2D_mod(int i, int j, instance *inst)
+{
+	double d = dist_euc2D(i, j, inst);
+	if(d < DOUBLE_TOL) {
+		double new_d = 0.01;
+		return new_d;
+	}
+	return d;
 }
 
 double dist_ceil2D(int i, int j, instance *inst)
@@ -348,6 +361,11 @@ void read_input(instance *inst)
 				inst->dist_type = (char *) calloc(strlen(token1)+1, sizeof(char));
 				strcpy(inst->dist_type, token1);
 			}
+			else if(!strncmp(token1, "MOD_EUC_2D", 10))
+			{
+				inst->dist_type = (char *) calloc(strlen(token1)+1, sizeof(char));
+				strcpy(inst->dist_type, token1);
+			}
 			else if(!strncmp(token1, "CEIL_2D", 7))
 			{
 				inst->dist_type = (char *) calloc(strlen(token1)+1, sizeof(char));
@@ -365,7 +383,7 @@ void read_input(instance *inst)
 			}
 			else
 			{
-				print_error(" format error:  only ATT, EUC_2D, CEIL_2D and GEO distances implemented so far!");
+				print_error(" format error in read_input():  only ATT, EUC_2D, CEIL_2D and GEO distances implemented so far!");
 			}
 			active_section = 0;
 			continue;

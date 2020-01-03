@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 	point_2d *points_coord = (point_2d *) calloc(x_lim*y_lim, sizeof(point_2d));
 
 	char *name = "SQUARE_GRID";
-	char *dist_type = "EUC_2D";
+	char *dist_type = "MOD_EUC_2D";
 	char *file_name = "grid.flow";
 	FILE *file = fopen(file_name, "w+");
 
