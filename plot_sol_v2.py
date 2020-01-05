@@ -80,24 +80,15 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 			value = weighted_edges[i][2]
 			node_color_map[idx] = node_color_map[idx] + value
 		
-		#print(node_color_map[:npoints])
-
 		edges[:,1] = edges[:,1] + nhosp
-
-		#print(weighted_edges)
 
 		G.add_edges_from(edges)
 
-		#edge_color_map = G.edges()
-		#edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
 		print("Number of edges = ", edges.size)
 	else:
 		for i in range(nhosp):
 			node_color_map[npoints+i] = 1
 
-	#print(G.nodes())
-	#node_color_map = np.array(node_color_map).astype(float)
-	
 	pos = nx.get_node_attributes(G, 'pos')
 	node_size = math.floor(npoints/4)
 	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=cmap, vmin=math.floor(min(node_color_map)), vmax=math.ceil(max(node_color_map)))
@@ -110,8 +101,17 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	x_unique = np.unique(px)
 	y_unique = np.unique(py)
 
-	plt.xticks(np.arange(0, np.ceil(np.amax(px)), x_unique[1]-x_unique[0]))
-	plt.yticks(np.arange(0, np.ceil(np.amax(py)), y_unique[1]-y_unique[0]))
+	x_edge_dim = x_unique[1]-x_unique[0]
+	y_edge_dim = y_unique[1]-y_unique[0]
+	
+	start_grid_x = np.amin(px) - x_edge_dim/2
+	start_grid_y = np.amin(py) - y_edge_dim/2
+
+	end_grid_x = np.amax(px) + x_edge_dim/2
+	end_grid_y = np.amax(py) + y_edge_dim/2
+	
+	plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
+	plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 

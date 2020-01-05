@@ -94,9 +94,18 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	py = p_coord[:,1] 
 	x_unique = np.unique(px)
 	y_unique = np.unique(py)
+	
+	x_edge_dim = x_unique[1]-x_unique[0]
+	y_edge_dim = y_unique[1]-y_unique[0]
+	
+	start_grid_x = np.amin(px) - x_edge_dim/2
+	start_grid_y = np.amin(py) - y_edge_dim/2
 
-	plt.xticks(np.arange(0, np.ceil(np.amax(px)), x_unique[1]-x_unique[0]))
-	plt.yticks(np.arange(0, np.ceil(np.amax(py)), y_unique[1]-y_unique[0]))
+	end_grid_x = np.amax(px) + x_edge_dim/2
+	end_grid_y = np.amax(py) + y_edge_dim/2
+	
+	plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
+	plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 

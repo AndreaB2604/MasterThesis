@@ -6,7 +6,13 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from collections import Counter
 
-def trunc_gauss(mu, sigma, bottom, top):
+def intGaussPoint2D(mean, cov, grid):
+	point = tuple(np.round(np.random.multivariate_normal(mean, cov)).astype(int))
+	while(not(point in grid)):
+		point = tuple(np.round(np.random.multivariate_normal(mean, cov)).astype(int))
+	return point
+
+def truncGauss(mu, sigma, bottom, top):
 	rand = int(random.gauss(mu, sigma))
 	while(rand < bottom or rand > top):
 		rand = int(random.gauss(mu, sigma))
@@ -47,28 +53,28 @@ def interpolateImg(img_path, px_per_km):
 	return interpolated_grid
 
 
-def gaussPopulation(grid, population, mu, sigma):
-	min_x = min(grid[:,0])
-	max_x = max(grid[:,0])
-	min_y = min(grid[:,1])
-	max_y = max(grid[:,1])
-
+def gaussPopulation(grid, population, mean, cov):
 	grid_dict = {}
 
 	# put at least one person in every square in the grid if the population is greater than the grid size
 	init_value = 1 if population > grid.shape[0] else 0
 	# adjust the number of point to generate based on how many are already present
-	npoints = population-grid.shape[0] if init_value == 1 else population
+	npoints = population - grid.shape[0] if init_value == 1 else population
 	
 	for x, y in grid:
 		grid_dict[(x, y)] = init_value
 
 	for i in range(npoints):
-		point = (trunc_gauss(mu[0], sigma[0], min_x, max_x), trunc_gauss(mu[1], sigma[1], min_y, max_y))
-		while(not(point in grid_dict)):
-			point = (trunc_gauss(mu[0], sigma[0], min_x, max_x), trunc_gauss(mu[1], sigma[1], min_y, max_y))
+		point = intGaussPoint2D(mean, cov, grid_dict)
 		grid_dict[point] = grid_dict[point] + 1
 	
+	s = 0
+	for k, v in grid_dict.items():
+		s = s + v
+		#print(k, v)
+
+	#print("s = ", s)
+
 	return grid_dict
 
 def plotPopulation(grid_dict):
@@ -87,9 +93,9 @@ def plotPopulation(grid_dict):
 	ax.scatter(sequence_containing_x_vals, sequence_containing_y_vals, sequence_containing_z_vals)
 	plt.gca().set_aspect('equal', adjustable='box')
 	
-	ax.view_init(20, 200)
-	fig.suptitle('Population distribution\nelev=20, azimut=200')
-	plt.savefig("pop_distribution_20_200.pdf", format='pdf', bbox_inches='tight')
+	ax.view_init(20, 290)
+	fig.suptitle('Population distribution\nelev=20, azimut=290')
+	plt.savefig("pop_distribution_20_290.pdf", format='pdf', bbox_inches='tight')
 	
 	ax.view_init(90, 270)
 	fig.suptitle('Population distribution\nelev=90, azimut=270')
@@ -103,21 +109,31 @@ def plotPopulation(grid_dict):
 	fig.suptitle('Population distribution\nelev=0, azimut=90')
 	plt.savefig("pop_distribution_0_90.pdf", format='pdf', bbox_inches='tight')
 	
-	ax.view_init(0, 180)
-	fig.suptitle('Population distribution\nelev=0, azimut=180')
-	plt.savefig("pop_distribution_0_180.pdf", format='pdf', bbox_inches='tight')
 
-
-def imgExtractRequest(img_path, mu, px_per_km, population):
+def imgExtractRequest(img_path, mean, px_per_km, population, plot=None):
 	grid = interpolateImg(img_path, px_per_km)
 	
-	sigma = (max(grid[:,0])/2, max(grid[:,1])/2)
-	
-	grid_dict = gaussPopulation(grid, int(population), mu, sigma)
-	plotPopulation(grid_dict)
+	cov_row1 = np.array([max(grid[:,0]), 0])
+	cov_row2 = np.array([0, max(grid[:,1])])	
+	cov = np.matrix([cov_row1, cov_row2])*2
+
+	grid_dict = gaussPopulation(grid, population, mean, cov)
+
+	'''	
+	s = 0
+	for i in range(33, 45):
+		for j in range(27, 40):
+			s = s + grid_dict[(i, j)]
+
+	print(s)
+	'''
+	if plot:
+		plotPopulation(grid_dict)
 
 
 if __name__ == '__main__':
-	mu = (37, 33)
+	img_path = sys.argv[1]
+	mu = (39, 33)
 	px_per_km = 11
-	imgExtractRequest(sys.argv[1], mu, px_per_km, sys.argv[2])
+	population = int(sys.argv[2])
+	imgExtractRequest(img_path, mu, px_per_km, population)
