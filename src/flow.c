@@ -18,7 +18,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 		if(VERBOSE > 1000) {
 			printf("The variable %s number %d has value %lf\n", cname, i, obj);
 		}
-		if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &integer, &cname)) {
+		if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &continuous, &cname)) {
 			print_error(" wrong CPXnewcols on y variables");
 		}
 		if(CPXgetnumcols(env,lp)-1 != i) {
@@ -36,7 +36,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 			double lb = 0.0;  
 			double ub = CPX_INFBOUND;
 
-			if(VERBOSE > 1000) {
+			if(VERBOSE >= 1000) {
 				printf("The variable %s number %d has value %lf\n", cname, xpos_flow(i, j, inst)+1, obj);
 			}
 			if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &continuous, &cname)) {
@@ -67,7 +67,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 	// add the constraint of fraction of requests served by each hospital
 	for(int i = 0; i < inst->nhosp; i++) {
 		int lastrow = CPXgetnumrows(env, lp);
-		double k = 100.0;
+		double k = 1.0;
 		double rhs = 0.0;
 		char sense = 'G';
 		sprintf(cname, "requests_served(%d)", i+1);

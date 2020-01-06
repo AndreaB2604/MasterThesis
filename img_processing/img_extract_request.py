@@ -41,8 +41,8 @@ def interpolateImg(img_path, px_per_km):
 	img = np.ones((new_height, new_width, 3), np.uint8)*255
 
 	for x, y in interpolated_grid:
-		color1 = (85, 85, 85)
-		color2 = (170, 170, 170)
+		color1 = (0, 170, 255)
+		color2 = (0, 0, 255)
 		if((x + y) % 2 == 0):
 			img[y, x] = color1
 		else:
@@ -117,7 +117,7 @@ def imgExtractRequest(img_path, mean, px_per_km, population, plot=False):
 	
 	cov_row1 = np.array([max(grid[:,0]), 0])
 	cov_row2 = np.array([0, max(grid[:,1])])	
-	cov = np.matrix([cov_row1, cov_row2])*2
+	cov = np.matrix([cov_row1, cov_row2])*5
 
 	grid_dict = gaussPopulation(grid, population, mean, cov)
 

@@ -15,7 +15,9 @@ def init_nodes(file, p_coord):
 		chunks = line.split(" ")
 		x = float(chunks[1])
 		y = float(chunks[2])
-		p_coord[i] = [x, y]
+		r = float(chunks[3])
+		if(r > 0):
+			p_coord[i] = [x, y]
 
 
 def init_hospital(file, h_coord):
@@ -79,16 +81,8 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 			w_u_v = list(G.get_edge_data(u, v).values())[0]
 			edge_color_map.append(w_u_v)
 
-	print(max(edge_color_map), min(edge_color_map))
 	node_color_map = ["orange" if i <=nhosp else "blue" for i in G.nodes()]
 	
-	pos = nx.get_node_attributes(G, 'pos')
-	node_size = 1/p_coord.shape[0]
-	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=mplcm.get_cmap("Blues"), vmin=0.0, vmax=1.0)
-	
-	if flag:
-		edges = nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=min(weights), edge_vmax=max(weights))
-
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
 	x_unique = np.unique(px)
@@ -96,6 +90,18 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	
 	x_edge_dim = x_unique[1]-x_unique[0]
 	y_edge_dim = y_unique[1]-y_unique[0]
+
+	img = plt.imread("img_processing/interpolated_img.png")
+	extent = [-y_edge_dim/2, img.shape[1]-y_edge_dim/2, x_edge_dim/2, img.shape[0]+x_edge_dim/2]
+	#ax.imshow(img, extent=[-0.5, img.shape[1]-0.5, 0.5, img.shape[0]+0.5])
+	ax.imshow(img, extent=extent)
+
+	pos = nx.get_node_attributes(G, 'pos')
+	node_size = 1/p_coord.shape[0]
+	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=mplcm.get_cmap("Blues"), vmin=0.0, vmax=1.0)
+	
+	if flag:
+		edges = nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=min(weights), edge_vmax=max(weights))
 	
 	start_grid_x = np.amin(px) - x_edge_dim/2
 	start_grid_y = np.amin(py) - y_edge_dim/2
@@ -103,8 +109,8 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	end_grid_x = np.amax(px) + x_edge_dim/2
 	end_grid_y = np.amax(py) + y_edge_dim/2
 	
-	plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
-	plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
+	#plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
+	#plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
@@ -114,7 +120,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 		sm.set_array([])
 		plt.colorbar(sm)
 	
-	plt.grid(True)
+	#plt.grid(True)
 	ax.set_axisbelow(True)
 	plt.gca().set_aspect('equal', adjustable='box')
 	plt.savefig("solution_flow.pdf", format='pdf', bbox_inches='tight')
@@ -147,4 +153,5 @@ def main(toplot):
 	plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight, flag)
 	
 if __name__ == '__main__':
+	np.set_printoptions(threshold = sys.maxsize)
 	main(sys.argv[1])
