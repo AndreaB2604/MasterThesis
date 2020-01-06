@@ -96,6 +96,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	if flag:
 		edges = nx.draw_networkx_edges(G, pos, edge_color="grey")
 
+	'''
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
 	x_unique = np.unique(px)
@@ -112,16 +113,17 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	
 	plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
 	plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
+	'''
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
 	if flag:
-		norm = plt.Normalize(vmin=math.floor(min(node_color_map[:npoints])), vmax=math.ceil(max(node_color_map[:npoints])))
+		norm = plt.Normalize(vmin=min(node_color_map[:npoints]), vmax=max(node_color_map[:npoints]))
 		sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
 		sm.set_array([])
 		plt.colorbar(sm)
 	
-	plt.grid(True)
+	#plt.grid(True)
 	ax.set_axisbelow(True)
 	plt.gca().set_aspect('equal', adjustable='box')
 	plt.savefig("solution_flow.pdf", format='pdf', bbox_inches='tight')

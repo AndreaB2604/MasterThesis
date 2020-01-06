@@ -54,7 +54,7 @@ def init_edges(file, edges, weights, h_weight):
 			weights.append(weight)
 	return True
 
-def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
+def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=None):
 
 	fig, ax = plt.subplots()
 
@@ -91,10 +91,11 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	x_edge_dim = x_unique[1]-x_unique[0]
 	y_edge_dim = y_unique[1]-y_unique[0]
 
-	img = plt.imread("img_processing/interpolated_img.png")
-	extent = [-y_edge_dim/2, img.shape[1]-y_edge_dim/2, x_edge_dim/2, img.shape[0]+x_edge_dim/2]
-	#ax.imshow(img, extent=[-0.5, img.shape[1]-0.5, 0.5, img.shape[0]+0.5])
-	ax.imshow(img, extent=extent)
+	if background_img != None:
+		img = plt.imread(background_img)
+		extent = [-y_edge_dim/2, img.shape[1]-y_edge_dim/2, x_edge_dim/2, img.shape[0]+x_edge_dim/2]
+		#ax.imshow(img, extent=[-0.5, img.shape[1]-0.5, 0.5, img.shape[0]+0.5])
+		ax.imshow(img, extent=extent)
 
 	pos = nx.get_node_attributes(G, 'pos')
 	node_size = 1/p_coord.shape[0]
@@ -127,7 +128,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	plt.show()
 
 
-def main(toplot):
+def main(toplot, background_img=None):
 	with open(toplot, "r") as file:
 		line = file.readline()
 		while (not(line.startswith("DIMENSION"))):
@@ -150,8 +151,10 @@ def main(toplot):
 		init_hospital(file, h_coord)
 		flag = init_edges(file, edges, weights, h_weight)
 
-	plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight, flag)
+	plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight, flag, background_img)
 	
 if __name__ == '__main__':
-	np.set_printoptions(threshold = sys.maxsize)
-	main(sys.argv[1])
+	#np.set_printoptions(threshold = sys.maxsize)
+	if len(sys.argv) == 2:
+		sys.argv.append(None)
+	main(sys.argv[1], sys.argv[2])

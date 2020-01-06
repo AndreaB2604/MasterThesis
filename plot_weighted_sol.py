@@ -14,7 +14,9 @@ def init_nodes(file, p_coord):
 		chunks = line.split(" ")
 		x = float(chunks[1])
 		y = float(chunks[2])
-		p_coord[i] = [x, y]
+		r = float(chunks[3])
+		if(r > 0):
+			p_coord[i] = [x, y]
 
 
 def init_hospital(file, h_coord):
@@ -51,7 +53,7 @@ def init_edges(file, edges, weights, h_weight):
 			weights.append(weight)
 	return True
 
-def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
+def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=None):
 
 	fig, ax = plt.subplots()
 
@@ -68,7 +70,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 
 	if flag:
 		edges[:,1] = edges[:,1] + nhosp
-		weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], np.around(weights, decimals=2))))
+		weighted_edges = np.transpose(np.vstack((edges[:,0], edges[:,1], weights)))
 
 		G.add_weighted_edges_from(weighted_edges)
 
@@ -79,15 +81,6 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
 	color_map = np.array(color_map).astype(float)
 	
-	pos = nx.get_node_attributes(G, 'pos')
-	nx.draw_networkx_nodes(G, pos, node_size=60, node_color=color_map, cmap=mplcm.get_cmap("rainbow"), vmin=0.0, vmax=1.0)
-	
-	if flag:
-		nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("rainbow"), edge_vmin=0.0, edge_vmax=1.0)
-
-		labels = nx.get_edge_attributes(G,'weight')
-		weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
-		nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
 
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
@@ -97,25 +90,43 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	x_edge_dim = x_unique[1]-x_unique[0]
 	y_edge_dim = y_unique[1]-y_unique[0]
 	
+	if background_img != None:
+		img = plt.imread(background_img)
+		extent = [-y_edge_dim/2, img.shape[1]-y_edge_dim/2, x_edge_dim/2, img.shape[0]+x_edge_dim/2]
+		#ax.imshow(img, extent=[-0.5, img.shape[1]-0.5, 0.5, img.shape[0]+0.5])
+		ax.imshow(img, extent=extent)
+
+	pos = nx.get_node_attributes(G, 'pos')
+	nx.draw_networkx_nodes(G, pos, node_size=1, node_color=color_map, cmap=mplcm.get_cmap("rainbow"), vmin=0.0, vmax=1.0)
+	
+	if flag:
+		nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("rainbow"), edge_vmin=0.0, edge_vmax=1.0)
+
+		labels = nx.get_edge_attributes(G,'weight')
+		weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
+		nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
+
+	
 	start_grid_x = np.amin(px) - x_edge_dim/2
 	start_grid_y = np.amin(py) - y_edge_dim/2
 
 	end_grid_x = np.amax(px) + x_edge_dim/2
 	end_grid_y = np.amax(py) + y_edge_dim/2
 	
-	plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
-	plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
+
+	#plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
+	#plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 	
-	plt.grid(True)
+	#plt.grid(True)
 	ax.set_axisbelow(True)
 	plt.gca().set_aspect('equal', adjustable='box')
 	plt.savefig("solution_weighted_flow.pdf", format='pdf', bbox_inches='tight')
 	plt.show()
 
 
-def main(toplot):
+def main(toplot, background_img=None):
 	with open(toplot, "r") as file:
 		line = file.readline()
 		while (not(line.startswith("DIMENSION"))):
@@ -138,7 +149,9 @@ def main(toplot):
 		init_hospital(file, h_coord)
 		flag = init_edges(file, edges, weights, h_weight)
 
-	plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight, flag)
+	plot_graph(p_coord, np.array(edges), np.array(weights), h_coord, h_weight, flag, background_img)
 	
 if __name__ == '__main__':
-	main(sys.argv[1])
+	if len(sys.argv) == 2:
+		sys.argv.append(None)
+	main(sys.argv[1], sys.argv[2])

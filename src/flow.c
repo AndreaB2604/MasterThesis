@@ -18,7 +18,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 		if(VERBOSE > 1000) {
 			printf("The variable %s number %d has value %lf\n", cname, i, obj);
 		}
-		if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &continuous, &cname)) {
+		if(CPXnewcols(env, lp, 1, &obj, &lb, &ub, &integer, &cname)) {
 			print_error(" wrong CPXnewcols on y variables");
 		}
 		if(CPXgetnumcols(env,lp)-1 != i) {
