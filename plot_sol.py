@@ -79,16 +79,15 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 			w_u_v = list(G.get_edge_data(u, v).values())[0]
 			edge_color_map.append(w_u_v)
 
-		print(edge_color_map)
-
+	print(max(edge_color_map), min(edge_color_map))
 	node_color_map = ["orange" if i <=nhosp else "blue" for i in G.nodes()]
 	
 	pos = nx.get_node_attributes(G, 'pos')
-	node_size = p_coord.shape[0]/4
+	node_size = 1/p_coord.shape[0]
 	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=mplcm.get_cmap("Blues"), vmin=0.0, vmax=1.0)
 	
 	if flag:
-		edges = nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=math.floor(min(weights)), edge_vmax=math.ceil(max(weights)))
+		edges = nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=min(weights), edge_vmax=max(weights))
 
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
@@ -110,7 +109,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag):
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
 	if flag:
-		norm = plt.Normalize(vmin=math.floor(min(weights)), vmax=math.ceil(max(weights)))
+		norm = plt.Normalize(vmin=min(weights), vmax=max(weights))
 		sm = plt.cm.ScalarMappable(cmap=mplcm.get_cmap("Blues"), norm=norm)
 		sm.set_array([])
 		plt.colorbar(sm)

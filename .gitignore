@@ -52,6 +52,7 @@ inst_generator
 
 # Directories
 build/
+__pycache__/
 
 # Debug files
 *.dSYM/

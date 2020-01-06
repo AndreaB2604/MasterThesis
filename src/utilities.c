@@ -222,11 +222,11 @@ void print_header_flow(instance *inst, FILE *file) {
 	fprintf(file, "NODE_COORD_SECTION\n");
 
 	for(int i = 0; i < inst->nnodes; i++)
-		fprintf(file, "%d %f %f\n", i+1, inst->x_nodes[i], inst->y_nodes[i]);
+		fprintf(file, "%d %f %f %f\n", i+1, inst->x_nodes[i], inst->y_nodes[i], inst->r_nodes[i]);
 
 	fprintf(file, "\nHOSPITALS_COORD_SECTION\n");
 	for(int i = 0; i < inst->nhosp; i++)
-		fprintf(file, "%d %f %f\n", i+1, inst->x_hosp[i], inst->y_hosp[i]);
+		fprintf(file, "%d %f %f %f\n", i+1, inst->x_hosp[i], inst->y_hosp[i], inst->c_hosp[i]);
 }
 
 void print_plot(instance *inst, char *plot_file_name)
@@ -249,6 +249,7 @@ void print_sol_flow(instance *inst, char *plot_file_name)
 	print_header_flow(inst, file);
 
 	fprintf(file, "\nSOLUTION\n");
+	// print the y variables
 	for(int i = 0; i < inst->nhosp; i++)
 		fprintf(file, "y_%d = %f\n", i+1, inst->best_sol[i]);
 	

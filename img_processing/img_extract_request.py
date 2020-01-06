@@ -35,15 +35,15 @@ def interpolateImg(img_path, px_per_km):
 	pair_counter = Counter([tuple(pair) for pair in grid])
 	interpolated_grid = sorted([key for key, value in pair_counter.items() if value >= threshold])
 	interpolated_grid = np.array(interpolated_grid)
-	new_width = max(interpolated_grid[:,0])+1
-	new_height = max(interpolated_grid[:,1])+1
+	new_width = max(interpolated_grid[:,0]) + 1
+	new_height = max(interpolated_grid[:,1]) + 1
 
 	img = np.ones((new_height, new_width, 3), np.uint8)*255
 
 	for x, y in interpolated_grid:
 		color1 = (85, 85, 85)
 		color2 = (170, 170, 170)
-		if((x+y) % 2 == 0):
+		if((x + y) % 2 == 0):
 			img[y, x] = color1
 		else:
 			img[y, x] = color2
@@ -66,15 +66,17 @@ def gaussPopulation(grid, population, mean, cov):
 
 	for i in range(npoints):
 		point = intGaussPoint2D(mean, cov, grid_dict)
-		grid_dict[point] = grid_dict[point] + 1
+		grid_dict[point] += 1
 	
+	'''
 	s = 0
 	for k, v in grid_dict.items():
 		s = s + v
-		#print(k, v)
+		print(k, v)
 
-	#print("s = ", s)
-
+	print("s = ", s)
+	'''
+	
 	return grid_dict
 
 def plotPopulation(grid_dict):
@@ -110,7 +112,7 @@ def plotPopulation(grid_dict):
 	plt.savefig("pop_distribution_0_90.pdf", format='pdf', bbox_inches='tight')
 	
 
-def imgExtractRequest(img_path, mean, px_per_km, population, plot=None):
+def imgExtractRequest(img_path, mean, px_per_km, population, plot=False):
 	grid = interpolateImg(img_path, px_per_km)
 	
 	cov_row1 = np.array([max(grid[:,0]), 0])
@@ -123,12 +125,14 @@ def imgExtractRequest(img_path, mean, px_per_km, population, plot=None):
 	s = 0
 	for i in range(33, 45):
 		for j in range(27, 40):
-			s = s + grid_dict[(i, j)]
+			s += grid_dict[(i, j)]
 
 	print(s)
 	'''
 	if plot:
 		plotPopulation(grid_dict)
+
+	return grid_dict
 
 
 if __name__ == '__main__':
