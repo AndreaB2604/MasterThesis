@@ -25,7 +25,7 @@ def writeInstNodes(file, complete_grid_dict, nhosp, max_dist):
 		for key, value in complete_grid_dict.items():
 			xcoord = f"{key[0]:.6f}"
 			ycoord = f"{key[1]:.6f}"
-			request = f"{value:.6f}"
+			request = f"{value:.15f}"
 			new_file.write(str(k) + " " + xcoord + " " + ycoord + " " + request + "\n")
 			k += 1
 
