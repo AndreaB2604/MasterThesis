@@ -29,7 +29,7 @@ def writeInstNodes(file, complete_grid_dict, nhosp, max_dist):
 			new_file.write(str(k) + " " + xcoord + " " + ycoord + " " + request + "\n")
 			k += 1
 
-def writeHospNodes(inst_path, new_path, nhosp):
+def writeHospNodes(inst_path, new_path, nhosp, px_per_km):
 	with open(inst_path, "r") as r_file:
 		with open(new_path, "a") as w_file:
 			w_file.write("\nHOSPITALS_COORD_SECTION\n")
@@ -37,7 +37,14 @@ def writeHospNodes(inst_path, new_path, nhosp):
 			while line:
 				if line.startswith("HOSPITALS_COORD_SECTION"):
 					for i in range(nhosp):
-						w_file.write(r_file.readline())
+						line = r_file.readline()
+						chunks = line.split(" ")
+						x = np.floor(float(chunks[1]) / px_per_km)
+						x = f"{x:.6f}"
+						y = np.floor(float(chunks[2]) / px_per_km)
+						y = f"{y:.6f}"
+						c = chunks[3]
+						w_file.write(str(i+1) + " " + x + " " + y + " " + c)
 					line = False
 				else:
 					line = r_file.readline()
@@ -87,7 +94,7 @@ def imgInstGenerator(inst_path, new_path):
 					complete_grid_dict[(x, y)] = 0
 		
 		writeInstNodes(new_path, complete_grid_dict, nhosp, max_dist)
-		writeHospNodes(inst_path, new_path, nhosp)
+		writeHospNodes(inst_path, new_path, nhosp, px_per_km)
 
 
 

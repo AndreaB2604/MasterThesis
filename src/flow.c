@@ -153,6 +153,13 @@ int flow_opt(instance *inst)
 	if(CPXgetobjval(env, lp, &obj_val))
 		print_error("Failure to read the value of the optimal solution in CPXgetobjval()");
 
+	// print the y variables and their sum
+	double sum = 0;
+	for(int i = 0; i < inst->nhosp; i++) {
+		sum += inst->best_sol[i];
+		printf("y_%d = %f\n", i+1, inst->best_sol[i]);
+	}
+	printf("Ambulances required = %lf\n", sum);
 	printf("\nSolution value  = %lf\n", obj_val);
 
 	// Free up the problem as allocated by CPXcreateprob, if necessary
