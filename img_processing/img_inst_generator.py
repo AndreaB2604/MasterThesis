@@ -70,7 +70,7 @@ def imgInstGenerator(inst_path, new_path):
 			elif line.startswith("POPULATION"):
 				population = int(line.split(" ")[2])
 			elif line.startswith("MAX_AMBULANCES"):
-				max_amb = int(line.split(" ")[2])
+				max_amb = float(line.split(" ")[2])
 			elif line.startswith("NUMBER_HOSPITALS"):
 				nhosp = int(line.split(" ")[2])
 			elif line.startswith("MAX_DISTANCE"):
