@@ -54,7 +54,7 @@ def writeHospNodes(inst_path, new_path, nhosp, px_per_km):
 def imgInstGenerator(inst_path, new_path):
 	with open(inst_path, "r") as file:
 		img_path = ""
-		mean, px_per_km, population, max_amb, nhosp, max_dist = 0, 0, 0, 0, 0, 0
+		mean, px_per_km, population, edge_dim, max_amb, nhosp, max_dist = 0, 0, 0, 0, 0, 0, 0
 
 		# parse the headers
 		line = file.readline()
@@ -67,6 +67,8 @@ def imgInstGenerator(inst_path, new_path):
 				mean = tuple([float(x) for x in tmp if isNumber(x)])
 			elif line.startswith("IMG_PX_PER_KM"):
 				px_per_km = int(line.split(" ")[2])
+			elif line.startswith("SQUARE_EDGE_DIM"):
+				edge_dim = float(line.split(" ")[2])
 			elif line.startswith("POPULATION"):
 				population = int(line.split(" ")[2])
 			elif line.startswith("MAX_AMBULANCES"):
@@ -89,7 +91,7 @@ def imgInstGenerator(inst_path, new_path):
 		for y in range(ypoints):
 			for x in range(xpoints):
 				if (x, y) in grid_dict:
-					complete_grid_dict[(x, y)] = max_amb * grid_dict[(x, y)] / population
+					complete_grid_dict[(x, y)] = grid_dict[(x, y)] / 360000 + edge_dim**2 / 700
 				else:
 					complete_grid_dict[(x, y)] = 0
 		
