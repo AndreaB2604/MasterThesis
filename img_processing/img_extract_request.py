@@ -65,18 +65,14 @@ def gaussPopulation(grid, population, mean, cov):
 	for x, y in grid:
 		grid_dict[(x, y)] = init_value
 
+	print("Generating the random population:")
+	fr = np.floor(population / 10)
 	for i in range(npoints):
 		point = intGaussPoint2D(mean, cov, grid_dict)
 		grid_dict[point] += 1
-	
-	'''
-	s = 0
-	for k, v in grid_dict.items():
-		s = s + v
-		print(k, v)
-
-	print("s = ", s)
-	'''
+		if i % fr == 0:
+			percent = int(np.round(i * 100 / npoints))
+			print("Generated " + str(i) + " points: " + str(percent) + "%")
 	
 	return grid_dict
 

@@ -91,10 +91,16 @@ def imgInstGenerator(inst_path, new_path):
 		for y in range(ypoints):
 			for x in range(xpoints):
 				if (x, y) in grid_dict:
-					complete_grid_dict[(x, y)] = grid_dict[(x, y)] / 360000 + edge_dim**2 / 700
+					complete_grid_dict[(x, y)] = grid_dict[(x, y)] / 120000 + edge_dim**2 / 700
 				else:
 					complete_grid_dict[(x, y)] = 0
-		
+		'''
+		s = 0
+		for v in complete_grid_dict.values():
+			s = s + v
+		print("s =", s)
+		'''
+
 		writeInstNodes(new_path, complete_grid_dict, nhosp, max_dist)
 		writeHospNodes(inst_path, new_path, nhosp, px_per_km)
 
