@@ -19,10 +19,14 @@ BIN_DIR = bin
 
 CPLEX_128 = /opt/ibm/ILOG/CPLEX_Studio128
 CPLEX_129 = /opt/ibm/ILOG/CPLEX_Studio129
+CPLEX_1210 = /opt/ibm/ILOG/CPLEX_Studio1210
 
 ifneq "$(wildcard $(CPLEX_BLADE) )" ""
 	CPLEX_LOC = $(CPLEX_BLADE)/cplex/include/ilcplex
 	LIB_LOC = $(CPLEX_BLADE)/cplex/lib/x86-64_linux/static_pic
+else ifneq "$(wildcard $(CPLEX_1210) )" ""
+	CPLEX_LOC = $(CPLEX_1210)/cplex/include/ilcplex
+	LIB_LOC = $(CPLEX_1210)/cplex/lib/x86-64_linux/static_pic
 else ifneq "$(wildcard $(CPLEX_129) )" ""
 	CPLEX_LOC = $(CPLEX_129)/cplex/include/ilcplex
 	LIB_LOC = $(CPLEX_129)/cplex/lib/x86-64_linux/static_pic
