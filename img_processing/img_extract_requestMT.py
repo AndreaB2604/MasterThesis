@@ -5,43 +5,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from collections import Counter
-from threading import Thread, RLock
+from multiprocessing import Manager, Process, RLock
 
-threadLock = RLock()
+# this function will be used by the processes
+def genGaussPopProcess(grid_dict, npoints, mean, cov, lock):
+	# generate an empty copy of the grid_dict where to work
+	copy_dict = {}
+	for point in grid_dict.keys():
+		copy_dict[point] = 0
+	
+	# generate the random point and insert them in the copy_dict
+	for i in range(npoints):
+		point = intGaussPoint2D(mean, cov, copy_dict)
+		copy_dict[point] += 1
 
-class GaussPopThread(Thread):
-	def __init__(self, grid_dict, npoints, mean, cov):
-		Thread.__init__(self)
-		self.grid_dict = grid_dict
-		self.npoints = npoints
-		self.mean = mean
-		self.cov = cov
-	def run(self):
-		copy_dict = self.grid_dict.copy()
-		for i in range(self.npoints):
-			point = intGaussPoint2D(self.mean, self.cov, self.grid_dict)
-			copy_dict[point] += 1
-		
-		threadLock.acquire()
-		try:
-			for point, value in copy_dict.items():
-				self.grid_dict[point] += value
-		finally:
-			threadLock.release()
-
-'''
-def addItemsToDict(grid_dict, point):
-	threadLock.acquire()
+	# acquire the lock to update the grid_dict, which is shared between the processes
+	lock.acquire()
 	try:
-		grid_dict[point] += 1
+		for point, value in copy_dict.items():
+			grid_dict[point] += value
 	finally:
-		threadLock.release()
-'''
+		lock.release()
+
+
 def intGaussPoint2D(mean, cov, grid):
 	point = tuple(np.round(np.random.multivariate_normal(mean, cov)).astype(int))
 	while(not(point in grid)):
 		point = tuple(np.round(np.random.multivariate_normal(mean, cov)).astype(int))
 	return point
+
 
 def truncGauss(mu, sigma, bottom, top):
 	rand = int(random.gauss(mu, sigma))
@@ -49,9 +41,8 @@ def truncGauss(mu, sigma, bottom, top):
 		rand = int(random.gauss(mu, sigma))
 	return rand
 
-def interpolateImg(img_path, px_per_km):
-	#np.set_printoptions(threshold = sys.maxsize)
 
+def interpolateImg(img_path, px_per_km):
 	image = cv2.imread(img_path)
 	lowerbound = np.array([0, 0, 0])  # BGR-code of the lowest black
 	upperbound = np.array([30, 30, 30])   # BGR-code of the highest black 
@@ -95,19 +86,28 @@ def gaussPopulation(grid, population, mean, cov):
 	for x, y in grid:
 		grid_dict[(x, y)] = init_value
 
-	nprocessor = 1
+	# create a manager to create the shared dictionary
+	manager = Manager()
+	manager_dict = manager.dict(grid_dict)
+	nprocessor = 8
 	grid_range = np.linspace(start=0, stop=npoints, num=nprocessor+1, dtype=int)
-	thread_list = []
+	process_list = []
+	# create the lock to be passed in the function to create the population
+	lock = RLock()
+
 	print("Generating the random population:")
 	for i in range(nprocessor):
-		t = GaussPopThread(grid_dict, grid_range[i+1]-grid_range[i], mean, cov)
-		print("Starting thread", i)
-		t.start()
-		thread_list.append(t)
+		p = Process(target=genGaussPopProcess, args=(manager_dict, grid_range[i+1]-grid_range[i], mean, cov, lock))
+		print("Starting process", i)
+		p.start()
+		process_list.append(p)
 
-	for t in thread_list:
-		t.join()
+	for p in process_list:
+		p.join()
 
+	# copy to the manager_dict to the original grid_dict
+	for key, value in manager_dict.items():
+		grid_dict[key] = value
 	return grid_dict
 
 def plotPopulation(grid_dict, img_path=None):
@@ -157,7 +157,7 @@ def imgExtractRequestMT(img_path, mean, px_per_km, population, plot=False):
 	cov = np.matrix([cov_row1, cov_row2])*5
 
 	grid_dict = gaussPopulation(grid, population, mean, cov)
-	print(grid_dict)
+	#print(grid_dict)
 		
 	s = 0
 	for v in grid_dict.values():
