@@ -155,6 +155,16 @@ def main(toplot, background_img=None):
 	
 if __name__ == '__main__':
 	#np.set_printoptions(threshold = sys.maxsize)
+
+	nprocessor = 4
+	grid_range = np.linspace(start=0, stop=925000, num=nprocessor+1, dtype=int)
+	print(grid_range)
+
+	tot = 0
+	for i in range(nprocessor):
+		iterations = grid_range[i+1]
+		print(grid_range[i+1]-grid_range[i])
+	
 	if len(sys.argv) == 2:
 		sys.argv.append(None)
-	main(sys.argv[1], sys.argv[2])
+	#main(sys.argv[1], sys.argv[2])
