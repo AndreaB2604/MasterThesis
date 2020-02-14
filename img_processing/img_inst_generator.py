@@ -29,26 +29,15 @@ def writeInstNodes(file, complete_grid_dict, nhosp, max_dist):
 			new_file.write(str(k) + " " + xcoord + " " + ycoord + " " + request + "\n")
 			k += 1
 
-def writeHospNodes(inst_path, new_path, nhosp, px_per_km):
-	with open(inst_path, "r") as r_file:
-		with open(new_path, "a") as w_file:
-			w_file.write("\nHOSPITALS_COORD_SECTION\n")
-			line = r_file.readline()
-			while line:
-				if line.startswith("HOSPITALS_COORD_SECTION"):
-					for i in range(nhosp):
-						line = r_file.readline()
-						chunks = line.split(" ")
-						x = np.floor(float(chunks[1]) / px_per_km)
-						x = f"{x:.6f}"
-						y = np.floor(float(chunks[2]) / px_per_km)
-						y = f"{y:.6f}"
-						c = chunks[3]
-						w_file.write(str(i+1) + " " + x + " " + y + " " + c)
-					line = False
-				else:
-					line = r_file.readline()
-
+def writeHospNodes(new_path, hcoord, px_per_km):
+	with open(new_path, "a") as w_file:
+		w_file.write("\nHOSPITALS_COORD_SECTION\n")
+		i = 0
+		for x, y, c in hcoord:
+			tmpx = f"{x:.6f}"
+			tmpy = f"{y:.6f}"
+			w_file.write(str(i+1) + " " + tmpx + " " + tmpy + " " + str(int(c)) + "\n")
+			i += 1
 
 
 def imgInstGenerator(inst_path, new_path):
@@ -79,7 +68,31 @@ def imgInstGenerator(inst_path, new_path):
 				max_dist = int(line.split(" ")[2])
 			line = file.readline()
 
-		grid_dict = imgExtractRequest(img_path, mean, px_per_km, population, plot=True)
+		if(nhosp <= 0):
+			print("ERROR: NUMBER_HOSPITALS field must be greater than zero in the instance file")
+			sys.exit()
+		if(max_dist <= 0):
+			print("ERROR: MAX_DISTANCE field must be greater than zero in the instance file")
+			sys.exit()
+		
+		# move the cursor to the beginning of the file to read the hospital coordinates
+		hcoord = []
+		file.seek(0)
+		line = file.readline()
+		while line:
+			if line.startswith("HOSPITALS_COORD_SECTION"):
+				for i in range(nhosp):
+					line = file.readline()
+					chunks = line.split(" ")
+					x = np.floor(float(chunks[1]) / px_per_km)
+					y = np.floor(float(chunks[2]) / px_per_km)
+					c = float(chunks[3])
+					hcoord.append([x, y, c])
+				line = False
+			else:
+				line = file.readline()
+
+		grid_dict = imgExtractRequest(img_path, mean, px_per_km, population, hosp_coord=hcoord, max_dist=max_dist, plot=True)
 		grid = list(grid_dict.keys())
 
 		np_grid = np.array(grid)
@@ -102,7 +115,7 @@ def imgInstGenerator(inst_path, new_path):
 		'''
 
 		writeInstNodes(new_path, complete_grid_dict, nhosp, max_dist)
-		writeHospNodes(inst_path, new_path, nhosp, px_per_km)
+		writeHospNodes(new_path, hcoord, px_per_km)
 
 
 
