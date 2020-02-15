@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as mplcm
 import matplotlib.colors as colors
 import networkx as nx
+from matplotlib.lines import Line2D
 
 def init_nodes(file, p_coord):
 	line = file.readline()
@@ -78,9 +79,11 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
 		print("Number of edges = ", edge_color_map.size)
 
-	color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
-	color_map = np.array(color_map).astype(float)
-	
+	#color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
+	#color_map = np.array(color_map).astype(float)
+
+	color_map = ["yellow" if i <=nhosp else "blue" for i in G.nodes()]
+		
 
 	px = p_coord[:,0]
 	py = p_coord[:,1] 
@@ -97,14 +100,17 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		ax.imshow(img, extent=extent)
 
 	pos = nx.get_node_attributes(G, 'pos')
-	nx.draw_networkx_nodes(G, pos, node_size=1, node_color=color_map, cmap=mplcm.get_cmap("rainbow"), vmin=0.0, vmax=1.0)
+	cmap = mplcm.get_cmap("rainbow")
+	nx.draw_networkx_nodes(G, pos, node_size=20, node_color=color_map, cmap=cmap, vmin=0.0, vmax=1.0)
 	
 	if flag:
-		nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("rainbow"), edge_vmin=0.0, edge_vmax=1.0)
-
+		nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=cmap, edge_vmin=0.0, edge_vmax=1.0)
 		labels = nx.get_edge_attributes(G,'weight')
+		round_labels = {}
+		for k, v in labels.items():
+			round_labels[k] = round(v, 2)
 		weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
-		nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
+		nx.draw_networkx_edge_labels(G, pos, edge_labels=round_labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
 
 	
 	start_grid_x = np.amin(px) - x_edge_dim/2
@@ -114,12 +120,18 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 	end_grid_y = np.amax(py) + y_edge_dim/2
 	
 
-	#plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
-	#plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
+	plt.xticks(np.arange(start_grid_x, end_grid_x, x_edge_dim))
+	plt.yticks(np.arange(start_grid_y, end_grid_y, y_edge_dim))
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 	
-	#plt.grid(True)
+	legend_elements = [Line2D([0], [0], marker='o', color='w', label='Demand points', markerfacecolor='blue', markersize=7),
+						Line2D([0], [0], marker='o', color='w', label='Service points', markerfacecolor='yellow', markersize=7)]
+
+	# Put a legend outside the plot
+	ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.04, 1))
+
+	plt.grid(True)
 	ax.set_axisbelow(True)
 	plt.gca().set_aspect('equal', adjustable='box')
 	plt.savefig("solution_weighted_flow.pdf", format='pdf', bbox_inches='tight')
