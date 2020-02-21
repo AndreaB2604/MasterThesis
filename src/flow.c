@@ -12,7 +12,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 		
 		sprintf(cname, "y_%d", (i+1));
 		double obj = 10000.0;
-		double lb = 0.0;  
+		double lb = 1.0;  
 		double ub = inst->c_hosp[i];
 		
 		if(VERBOSE > 1000) {

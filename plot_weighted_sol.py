@@ -79,10 +79,10 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		edge_color_map = (np.array(edge_color_map)[:,1]/(nhosp+1)).astype(float)
 		print("Number of edges = ", edge_color_map.size)
 
-	#color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
-	#color_map = np.array(color_map).astype(float)
+	color_map = [(i/(nhosp+1)) if i <=nhosp else 1 for i in G.nodes()]
+	color_map = np.array(color_map).astype(float)
 
-	color_map = ["yellow" if i <=nhosp else "blue" for i in G.nodes()]
+	#color_map = ["yellow" if i <=nhosp else "blue" for i in G.nodes()]
 		
 
 	px = p_coord[:,0]
@@ -110,7 +110,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		for k, v in labels.items():
 			round_labels[k] = round(v, 2)
 		weights_bbox = dict(boxstyle="round, pad=0.3", fc="cyan", lw=0.1)
-		nx.draw_networkx_edge_labels(G, pos, edge_labels=round_labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
+		#nx.draw_networkx_edge_labels(G, pos, edge_labels=round_labels, font_size=4, label_pos=0.8,  bbox=weights_bbox)
 
 	
 	start_grid_x = np.amin(px) - x_edge_dim/2
@@ -125,11 +125,11 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 
 	ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 	
-	legend_elements = [Line2D([0], [0], marker='o', color='w', label='Demand points', markerfacecolor='blue', markersize=7),
-						Line2D([0], [0], marker='o', color='w', label='Service points', markerfacecolor='yellow', markersize=7)]
+	#legend_elements = [Line2D([0], [0], marker='o', color='w', label='Demand points', markerfacecolor='blue', markersize=7),
+	#					Line2D([0], [0], marker='o', color='w', label='Service points', markerfacecolor='yellow', markersize=7)]
 
 	# Put a legend outside the plot
-	ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.04, 1))
+	#ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.04, 1))
 
 	plt.grid(True)
 	ax.set_axisbelow(True)

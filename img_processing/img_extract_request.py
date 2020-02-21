@@ -39,6 +39,7 @@ def interpolateImg(img_path, px_per_km, hosp_coord=None, max_dist=None):
 	new_width = max(interpolated_grid[:,0]) + 1
 	new_height = max(interpolated_grid[:,1]) + 1
 
+	small_img = np.ones((new_height, new_width, 3), np.uint8)*255
 	img = np.ones((new_height*px_per_km, new_width*px_per_km, 3), np.uint8)*255
 
 	for x, y in interpolated_grid:
@@ -47,11 +48,15 @@ def interpolateImg(img_path, px_per_km, hosp_coord=None, max_dist=None):
 		tmpx = x * px_per_km
 		tmpy = y * px_per_km
 		if((x + y) % 2 == 0):
+			small_img[y, x] = color1
 			img[tmpy:tmpy+px_per_km, tmpx:tmpx+px_per_km] = color1
 		else:
+			small_img[y, x] = color2
 			img[tmpy:tmpy+px_per_km, tmpx:tmpx+px_per_km] = color2
 
+	small_img_dest_path = img_path.rsplit("/", 1)[0] + "/interpolated_small_img.png"
 	img_dest_path = img_path.rsplit("/", 1)[0] + "/interpolated_img.png"
+	cv2.imwrite(small_img_dest_path, small_img)
 	cv2.imwrite(img_dest_path, img)
 	
 	if((hosp_coord != None) and (max_dist != None)):
@@ -70,7 +75,6 @@ def interpolateImg(img_path, px_per_km, hosp_coord=None, max_dist=None):
 				if(xc in wrange and yc in hrange):
 					img[int(yc), int(xc)] = color2
 				
-
 		img_dest_path = img_path.rsplit("/", 1)[0] + "/interpolated_hosp_img.png"
 		cv2.imwrite(img_dest_path, img)
 
