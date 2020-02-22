@@ -141,8 +141,23 @@ def plotPopulation(grid_dict, img_path=None):
 	
 
 def imgExtractRequest(img_path, mean, px_per_km, population, hosp_coord=None, max_dist=None, plot=False):
+	print("Generating the interpolated images...")
 	grid = interpolateImg(img_path, px_per_km, hosp_coord, max_dist)
 	
+	print("Interpolated images generated.")
+
+	txt = input("Do you want to generate the gaussian distributed population? [y/n]\n")
+
+	done = False
+	while(not(done)):
+		if(txt == "n"):
+			return None
+		elif(txt == "y"):
+			done = True
+		else:
+			txt = input("Do you want to generate the gaussian distributed population? [y/n]\n")
+
+
 	# normalize the mean on px_per_km
 	mean = np.floor(np.array(mean) / px_per_km).astype(int)
 	mean = tuple(mean)

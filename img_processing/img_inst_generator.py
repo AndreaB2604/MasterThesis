@@ -93,6 +93,10 @@ def imgInstGenerator(inst_path, new_path):
 				line = file.readline()
 
 		grid_dict = imgExtractRequest(img_path, mean, px_per_km, population, hosp_coord=hcoord, max_dist=max_dist, plot=True)
+		
+		if(grid_dict == None):
+			return
+			
 		grid = list(grid_dict.keys())
 
 		np_grid = np.array(grid)
