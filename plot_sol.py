@@ -98,7 +98,8 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		ax.imshow(img, extent=extent)
 
 	pos = nx.get_node_attributes(G, 'pos')
-	node_size = 1/p_coord.shape[0]
+
+	node_size = 0 #1/p_coord.shape[0]
 	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=mplcm.get_cmap("Blues"), vmin=0.0, vmax=1.0)
 	
 	if flag:
@@ -121,6 +122,13 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		sm.set_array([])
 		plt.colorbar(sm)
 	
+	# add the y label to each hospital in the plot
+	for i in range(1, nhosp+1):
+		hx, hy = pos[i]
+		s = "$y_" + str(i) + "$"
+		plt.text(hx+2, hy+1, s=s, horizontalalignment='center')
+	
+
 	#plt.grid(True)
 	ax.set_axisbelow(True)
 	plt.gca().set_aspect('equal', adjustable='box')
