@@ -1,11 +1,20 @@
 import sys
 import cv2
+import csv
+import re
 import random
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from collections import Counter
 from create_circle import midPointCircleDraw
+
+def isNumber(x):
+	try:
+		float(x)
+		return True
+	except ValueError:
+		return False
 
 def intGaussPoint2D(mean, cov, grid):
 	point = tuple(np.round(np.random.multivariate_normal(mean, cov)).astype(int))
@@ -105,6 +114,55 @@ def gaussPopulation(grid, population, mean, cov):
 	
 	return grid_dict
 
+
+def gaussPopulationCSV(grid, population, csv_path, cov, px_per_km):
+	with open(csv_path, mode='r') as csv_file:
+		# initialise the means and the probability distribution form the CSV
+		csv_reader = csv.reader(csv_file)
+		
+		csv_pop = []
+		csv_means = []
+		for line in csv_reader:
+			if(isNumber(line[0])):
+				csv_pop.append(int(line[2]))
+				tmp = re.split('[(), ]', line[3])
+				mean = tuple([float(x) for x in tmp if isNumber(x)])
+				csv_means.append(mean)
+		
+		csv_pop = np.array(csv_pop) / np.sum(csv_pop)
+		csv_means = np.floor(np.array(csv_means) / px_per_km).astype(int)
+
+		# initialise the grid dictionary
+		grid_dict = {}
+
+		# put at least one person in every square in the grid if the population is greater than the grid size
+		init_value = 1 if population > grid.shape[0] else 0
+		# adjust the number of point to generate based on how many are already present
+		npoints = population - grid.shape[0] if init_value == 1 else population
+		
+		for x, y in grid:
+			grid_dict[(x, y)] = init_value
+
+		rng = np.random.default_rng()
+		rand_means = rng.choice(csv_means, npoints, p=csv_pop)
+
+		print("Generating the random population:")
+		fr = np.floor(population / 10)
+		i = 0
+		for mean in rand_means:
+			point = intGaussPoint2D(mean, cov, grid_dict)
+			grid_dict[point] += 1
+			if i % fr == 0:
+				percent = int(np.round(i * 100 / npoints))
+				print("Generated " + str(i) + " points: " + str(percent) + "%")
+			i += 1
+		
+		for key, value in grid_dict.items():
+			if(value == 1):
+				print(key)
+
+		return grid_dict
+
 def plotPopulation(grid_dict, img_path=None):
 	fig = plt.figure()
 	ax = Axes3D(fig)
@@ -140,7 +198,7 @@ def plotPopulation(grid_dict, img_path=None):
 	plt.savefig(dest_folder + "pop_distribution_0_90.pdf", format='pdf', bbox_inches='tight')
 	
 
-def imgExtractRequest(img_path, mean, px_per_km, population, hosp_coord=None, max_dist=None, plot=False):
+def imgExtractRequest(img_path, px_per_km, population, mean=None, csv_file=None, hosp_coord=None, max_dist=None, plot=False):
 	print("Generating the interpolated images...")
 	grid = interpolateImg(img_path, px_per_km, hosp_coord, max_dist)
 	
@@ -157,16 +215,21 @@ def imgExtractRequest(img_path, mean, px_per_km, population, hosp_coord=None, ma
 		else:
 			txt = input("Do you want to generate the gaussian distributed population? [y/n]\n")
 
-
-	# normalize the mean on px_per_km
-	mean = np.floor(np.array(mean) / px_per_km).astype(int)
-	mean = tuple(mean)
-
+	# define the covariance matrix rows
 	cov_row1 = np.array([max(grid[:,0]), 0])
-	cov_row2 = np.array([0, max(grid[:,1])])	
-	cov = np.matrix([cov_row1, cov_row2])*5
+	cov_row2 = np.array([0, max(grid[:,1])])
+	cov = np.matrix([cov_row1, cov_row2])
 
-	grid_dict = gaussPopulation(grid, population, mean, cov)
+	if(csv_file == None):
+		# normalize the mean on px_per_km
+		mean = np.floor(np.array(mean) / px_per_km).astype(int)
+		mean = tuple(mean)
+
+		cov *= 5
+
+		grid_dict = gaussPopulation(grid, population, mean, cov)
+	else:
+		grid_dict = gaussPopulationCSV(grid, population, csv_file, cov/2, px_per_km)
 
 	'''	
 	s = 0

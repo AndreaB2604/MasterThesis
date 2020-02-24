@@ -42,7 +42,7 @@ def writeHospNodes(new_path, hcoord, px_per_km):
 
 def imgInstGenerator(inst_path, new_path):
 	with open(inst_path, "r") as file:
-		img_path = ""
+		img_path, csv_file = None, None
 		mean, px_per_km, population, edge_dim, max_amb, nhosp, max_dist = 0, 0, 0, 0, 0, 0, 0
 
 		# parse the headers
@@ -51,6 +51,8 @@ def imgInstGenerator(inst_path, new_path):
 			line = line.replace("\n", "")
 			if line.startswith("IMG_SRC"):
 				img_path = line.split(" ")[2]
+			elif line.startswith("POP_DISTRIBUTION_CSV"):
+				csv_file = line.split(" ")[2]
 			elif line.startswith("IMG_CENTER"):
 				tmp = re.split('[(), ]', line)
 				mean = tuple([float(x) for x in tmp if isNumber(x)])
@@ -92,7 +94,7 @@ def imgInstGenerator(inst_path, new_path):
 			else:
 				line = file.readline()
 
-		grid_dict = imgExtractRequest(img_path, mean, px_per_km, population, hosp_coord=hcoord, max_dist=max_dist, plot=True)
+		grid_dict = imgExtractRequest(img_path, px_per_km, population, mean=mean, csv_file=csv_file, hosp_coord=hcoord, max_dist=max_dist, plot=True)
 		
 		if(grid_dict == None):
 			return
