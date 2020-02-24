@@ -156,10 +156,6 @@ def gaussPopulationCSV(grid, population, csv_path, cov, px_per_km):
 				percent = int(np.round(i * 100 / npoints))
 				print("Generated " + str(i) + " points: " + str(percent) + "%")
 			i += 1
-		
-		for key, value in grid_dict.items():
-			if(value == 1):
-				print(key)
 
 		return grid_dict
 
