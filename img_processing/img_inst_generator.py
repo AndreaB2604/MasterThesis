@@ -1,14 +1,7 @@
 import sys
 import re
 import numpy as np
-from img_extract_request import imgExtractRequest
-
-def isNumber(x):
-	try:
-		float(x)
-		return True
-	except ValueError:
-		return False
+from img_extract_request import isNumber, imgExtractRequest
 
 def writeInstNodes(file, complete_grid_dict, nhosp, max_dist):
 	with open(file, "w") as new_file:

@@ -148,7 +148,7 @@ def gaussPopulationCSV(grid, population, csv_path, cov, px_per_km):
 
 		print("Generating the random population:")
 		fr = np.floor(population / 10)
-		i = 0
+		i = population - npoints
 		for mean in rand_means:
 			point = intGaussPoint2D(mean, cov, grid_dict)
 			grid_dict[point] += 1
@@ -225,9 +225,9 @@ def imgExtractRequest(img_path, px_per_km, population, mean=None, csv_file=None,
 
 		grid_dict = gaussPopulation(grid, population, mean, cov)
 	else:
-		grid_dict = gaussPopulationCSV(grid, population, csv_file, cov/2, px_per_km)
+		grid_dict = gaussPopulationCSV(grid, population, csv_file, cov, px_per_km)
 
-	'''	
+	'''
 	s = 0
 	for i in range(33, 45):
 		for j in range(27, 40):
@@ -235,6 +235,7 @@ def imgExtractRequest(img_path, px_per_km, population, mean=None, csv_file=None,
 
 	print(s)
 	'''
+	
 	if plot:
 		plotPopulation(grid_dict, img_path)
 
