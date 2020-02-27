@@ -69,6 +69,9 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		pos = (h_coord[i][0], h_coord[i][1])
 		G.add_node(i+1, pos=pos)
 
+	# two dictionaries are needed to plot the lightest weights before the heaviest ones
+	edge_dict = {}
+	sort_edge_dict = {}
 	if flag:
 		edges[:,1] = edges[:,1] + nhosp
 
@@ -79,7 +82,10 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 		edge_color_map = []	
 		for (u, v) in G.edges():
 			w_u_v = list(G.get_edge_data(u, v).values())[0]
-			edge_color_map.append(w_u_v)
+			edge_dict[(u, v)] = w_u_v
+		
+		# sort the dictionary based on the value
+		sort_edge_dict = {k: v for k, v in sorted(edge_dict.items(), key=lambda item: item[1])}
 
 	node_color_map = ["orange" if i <=nhosp else "blue" for i in G.nodes()]
 	
@@ -103,7 +109,7 @@ def plot_graph(p_coord, edges, weights, h_coord, h_weight, flag, background_img=
 	nodes = nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=node_color_map, cmap=mplcm.get_cmap("Blues"), vmin=0.0, vmax=1.0)
 	
 	if flag:
-		edges = nx.draw_networkx_edges(G, pos, edge_color=edge_color_map, edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=min(weights), edge_vmax=max(weights))
+		edges = nx.draw_networkx_edges(G, pos, edgelist=sort_edge_dict.keys(), edge_color=sort_edge_dict.values(), edge_cmap=mplcm.get_cmap("Blues"), edge_vmin=min(weights), edge_vmax=max(weights))
 	
 	start_grid_x = np.amin(px) - x_edge_dim/2
 	start_grid_y = np.amin(py) - y_edge_dim/2
