@@ -128,7 +128,8 @@ def gaussPopulationCSV(grid, population, csv_path, cov, px_per_km):
 				tmp = re.split('[(), ]', line[3])
 				mean = tuple([float(x) for x in tmp if isNumber(x)])
 				csv_means.append(mean)
-		
+
+		#csv_pop = np.sqrt(csv_pop)
 		csv_pop = np.array(csv_pop) / np.sum(csv_pop)
 		csv_means = np.floor(np.array(csv_means) / px_per_km).astype(int)
 
@@ -185,14 +186,13 @@ def plotPopulation(grid_dict, img_path=None):
 	fig.suptitle('Population distribution\nelev=90, azimut=270')
 	plt.savefig(dest_folder + "pop_distribution_90_270.pdf", format='pdf', bbox_inches='tight')
 	
-	ax.view_init(0, 0)
-	fig.suptitle('Population distribution\nelev=0, azimut=0')
-	plt.savefig(dest_folder + "pop_distribution_0_0.pdf", format='pdf', bbox_inches='tight')
-	
-	ax.view_init(0, 90)
-	fig.suptitle('Population distribution\nelev=0, azimut=90')
-	plt.savefig(dest_folder + "pop_distribution_0_90.pdf", format='pdf', bbox_inches='tight')
-	
+	for i in range(0, 360, 90):
+		title = "Population distribution\nelev=0, azimut=" + str(i)
+		file_path = dest_folder + "pop_distribution_0_" + str(i) + ".pdf"
+		ax.view_init(0, i)
+		fig.suptitle(title)
+		plt.savefig(file_path, format='pdf', bbox_inches='tight')
+
 
 def imgExtractRequest(img_path, px_per_km, population, mean=None, csv_file=None, hosp_coord=None, max_dist=None, plot=False):
 	print("Generating the interpolated images...")
@@ -235,7 +235,7 @@ def imgExtractRequest(img_path, px_per_km, population, mean=None, csv_file=None,
 
 	print(s)
 	'''
-	
+
 	if plot:
 		plotPopulation(grid_dict, img_path)
 
