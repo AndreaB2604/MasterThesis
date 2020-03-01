@@ -5,7 +5,7 @@ from img_extract_request import isNumber, imgExtractRequest
 
 def writeInstNodes(file, complete_grid_dict, nhosp, max_dist):
 	with open(file, "w") as new_file:
-		new_file.write("NAME : SQUARE_GRID\n")
+		new_file.write("NAME : MINIMUM_AMBULANCES\n")
 		new_file.write("DIMENSION : " + str(len(complete_grid_dict)) + "\n")
 		new_file.write("NUMBER_HOSPITALS : " + str(nhosp) + "\n")
 		new_file.write("MAX_DISTANCE : " + str(max_dist) + "\n")
@@ -35,8 +35,11 @@ def writeHospNodes(new_path, hcoord, px_per_km):
 
 def imgInstGenerator(inst_path, new_path):
 	with open(inst_path, "r") as file:
-		img_path, csv_file = None, None
-		mean, px_per_km, population, edge_dim, max_amb, nhosp, max_dist = 0, 0, 0, 0, 0, 0, 0
+		img_path, csv_file, d_node = None, None, None
+		mean, px_per_km, population, edge_dim, max_req, nhosp, max_dist = 0, 0, 0, 0, 0, 0, 0
+
+		request_generation_dict = {	"AGENAS_FORMULA": 0, 
+									"MAX_REQUESTS_DISTRIBUTION" : 1}
 
 		# parse the headers
 		line = file.readline()
@@ -55,8 +58,10 @@ def imgInstGenerator(inst_path, new_path):
 				edge_dim = float(line.split(" ")[2])
 			elif line.startswith("POPULATION"):
 				population = int(line.split(" ")[2])
-			elif line.startswith("MAX_AMBULANCES"):
-				max_amb = float(line.split(" ")[2])
+			elif line.startswith("DEMAND_GENERATION_TYPE"):
+				d_node = line.split(" ")[2]
+			elif line.startswith("MAX_REQUESTS"):
+				max_req = float(line.split(" ")[2])
 			elif line.startswith("NUMBER_HOSPITALS"):
 				nhosp = int(line.split(" ")[2])
 			elif line.startswith("MAX_DISTANCE"):
@@ -65,11 +70,15 @@ def imgInstGenerator(inst_path, new_path):
 
 		if(nhosp <= 0):
 			print("ERROR: NUMBER_HOSPITALS field must be greater than zero in the instance file")
-			sys.exit()
+			sys.exit(1)
 		if(max_dist <= 0):
 			print("ERROR: MAX_DISTANCE field must be greater than zero in the instance file")
-			sys.exit()
-		
+			sys.exit(1)		
+
+		if(not(d_node in request_generation_dict.keys())):
+			print("ERROR: DEMAND_GENERATION_TYPE not found or wrong: it must be AGENAS_FORMULA or MAX_REQUESTS_DISTRIBUTION")
+			sys.exit(1)
+
 		# move the cursor to the beginning of the file to read the hospital coordinates
 		hcoord = []
 		file.seek(0)
@@ -103,7 +112,10 @@ def imgInstGenerator(inst_path, new_path):
 		for y in range(ypoints):
 			for x in range(xpoints):
 				if (x, y) in grid_dict:
-					complete_grid_dict[(x, y)] = grid_dict[(x, y)] / 120000 + edge_dim**2 / 700
+					if(request_generation_dict[d_node] == 0):
+						complete_grid_dict[(x, y)] = grid_dict[(x, y)] / 120000 + edge_dim**2 / 700
+					else:
+						complete_grid_dict[(x, y)] = grid_dict[(x, y)] * max_req / population
 				else:
 					complete_grid_dict[(x, y)] = 0
 		'''
