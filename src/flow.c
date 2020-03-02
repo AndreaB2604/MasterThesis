@@ -11,7 +11,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 	for(int i = 0; i < inst->nhosp; i++) {
 		
 		sprintf(cname, "y_%d", (i+1));
-		double obj = 10000.0;
+		double obj = 10.0;
 		double lb = 1.0;  
 		double ub = inst->c_hosp[i];
 		
@@ -87,11 +87,11 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 
 	// add the constraint of infeasibility of all the x pairs
 	for(int j = 0; j < inst->nnodes; j++) {
-		/*double min_dist = DBL_MAX;
+		double min_dist = DBL_MAX;
 		int min_dist_idx = -1;
 		int counter = 0;
 		
-		// check how many points are in the radius of max_distance
+		// check how many hospitals are in the radius of max_distance
 		for(int i = 0; i < inst->nhosp; i++) {
 			double curr_dist = dist(i, j, inst);
 			if(curr_dist > inst->max_distance) {
@@ -107,13 +107,9 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 			int lastrow = CPXgetnumrows(env, lp);
 			double rhs = 0.0;
 			char sense = 'E';
+			// for the hospital outside the radius add the infeasibility for all except the nearest hospital
 			if(counter == inst->nhosp && inst->r_nodes[j] > DOUBLE_TOL) {
-				
-				//printf("i = %d, j = %d\n", i, j);
-				//printf("min_dist_idx = %d\n", min_dist_idx+1);
-				
 				if(i != min_dist_idx) {
-					printf("i = %d\n", i);
 					sprintf(cname, "non_reachability(x_%d_%d)", i+1, j+1);
 					if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
 						print_error(" wrong CPXnewrows [x1]");
@@ -123,25 +119,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 						print_error(" wrong CPXchgcoef infeasibility contraint");
 				}
 			}
-			else {
-				if(dist(i, j, inst) > inst->max_distance) {
-					sprintf(cname, "non_reachability(x_%d_%d)", i+1, j+1);
-					if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
-						print_error(" wrong CPXnewrows [x1]");
-
-					// change the coefficient for the single x_i
-					if(CPXchgcoef(env, lp, lastrow, xpos_flow(i, j, inst), 1.0)) 
-						print_error(" wrong CPXchgcoef infeasibility contraint");
-				}
-			}
-		}
-		*/
-
-		for(int i = 0; i < inst->nhosp; i++) {
-			if(dist(i, j, inst) > inst->max_distance) {
-				int lastrow = CPXgetnumrows(env, lp);
-				double rhs = 0.0;
-				char sense = 'E';
+			else if(dist(i, j, inst) > inst->max_distance) {
 				sprintf(cname, "non_reachability(x_%d_%d)", i+1, j+1);
 				if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
 					print_error(" wrong CPXnewrows [x1]");
@@ -149,6 +127,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 				// change the coefficient for the single x_i
 				if(CPXchgcoef(env, lp, lastrow, xpos_flow(i, j, inst), 1.0)) 
 					print_error(" wrong CPXchgcoef infeasibility contraint");
+				
 			}
 		}
 	}
