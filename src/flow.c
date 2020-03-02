@@ -7,6 +7,9 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 
 	char *cname = (char *) calloc(100, sizeof(char));
 
+	// for informative purposes
+	double max_dist = inst->max_distance;
+
 	// add the y variables to the objective function
 	for(int i = 0; i < inst->nhosp; i++) {
 		
@@ -91,8 +94,10 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 		int min_dist_idx = -1;
 		int counter = 0;
 		
+		int is_within = inst->r_nodes[j] > DOUBLE_TOL;
+
 		// check how many hospitals are in the radius of max_distance
-		for(int i = 0; i < inst->nhosp; i++) {
+		for(int i = 0; i < inst->nhosp && is_within; i++) {
 			double curr_dist = dist(i, j, inst);
 			if(curr_dist > inst->max_distance) {
 				if(curr_dist < min_dist) {
@@ -107,8 +112,9 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 			int lastrow = CPXgetnumrows(env, lp);
 			double rhs = 0.0;
 			char sense = 'E';
+			double curr_dist = dist(i, j, inst);
 			// for the hospital outside the radius add the infeasibility for all except the nearest hospital
-			if(counter == inst->nhosp && inst->r_nodes[j] > DOUBLE_TOL) {
+			if(counter == inst->nhosp && is_within) {
 				if(i != min_dist_idx) {
 					sprintf(cname, "non_reachability(x_%d_%d)", i+1, j+1);
 					if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
@@ -118,8 +124,12 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 					if(CPXchgcoef(env, lp, lastrow, xpos_flow(i, j, inst), 1.0)) 
 						print_error(" wrong CPXchgcoef infeasibility contraint");
 				}
+				else if(curr_dist > max_dist) {
+					// for informative purposes find the max_distance needed to solve the problem
+					max_dist = curr_dist;
+				}
 			}
-			else if(dist(i, j, inst) > inst->max_distance) {
+			else if(curr_dist > inst->max_distance) {
 				sprintf(cname, "non_reachability(x_%d_%d)", i+1, j+1);
 				if(CPXnewrows(env, lp, 1, &rhs, &sense, NULL, &cname))
 					print_error(" wrong CPXnewrows [x1]");
@@ -127,11 +137,11 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 				// change the coefficient for the single x_i
 				if(CPXchgcoef(env, lp, lastrow, xpos_flow(i, j, inst), 1.0)) 
 					print_error(" wrong CPXchgcoef infeasibility contraint");
-				
 			}
 		}
 	}
 
+	printf("NOTE: the minimum distance to cover all the points is %f\n\n", ceil(max_dist));
 
 	free(cname);
 }
