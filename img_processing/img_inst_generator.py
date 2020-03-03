@@ -113,7 +113,6 @@ def imgInstGenerator(inst_path, new_path):
 		else:
 			file_list.append(request_generation_dict[d_node])
 		
-		print("file_list =", file_list)
 		for elem in file_list:
 			output_file = None
 			if(len(file_list) == 1):
