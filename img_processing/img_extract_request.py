@@ -154,7 +154,7 @@ def gaussPopulationCSV(grid, population, csv_path, cov, px_per_km):
 			point = intGaussPoint2D(mean, cov, grid_dict)
 			grid_dict[point] += 1
 			if i % fr == 0:
-				percent = int(np.round(i * 100 / npoints))
+				percent = int(np.round(i * 100 / population))
 				print("Generated " + str(i) + " points: " + str(percent) + "%")
 			i += 1
 

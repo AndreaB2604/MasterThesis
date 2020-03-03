@@ -38,8 +38,8 @@ def imgInstGenerator(inst_path, new_path):
 		img_path, csv_file, d_node = None, None, None
 		mean, px_per_km, population, edge_dim, max_req, nhosp, max_dist = 0, 0, 0, 0, 0, 0, 0
 
-		request_generation_dict = {	"AGENAS_FORMULA": 0, 
-									"MAX_REQUESTS_DISTRIBUTION" : 1}
+		request_generation_dict = {	"AGENAS_FORMULA": "_agenas", 
+									"MAX_REQUESTS_DISTRIBUTION" : "_request"}
 
 		# parse the headers
 		line = file.readline()
@@ -75,8 +75,8 @@ def imgInstGenerator(inst_path, new_path):
 			print("ERROR: MAX_DISTANCE field must be greater than zero in the instance file")
 			sys.exit(1)		
 
-		if(not(d_node in request_generation_dict.keys())):
-			print("ERROR: DEMAND_GENERATION_TYPE not found or wrong: it must be AGENAS_FORMULA or MAX_REQUESTS_DISTRIBUTION")
+		if(not(d_node in request_generation_dict.keys() or d_node == "ALL")):
+			print("ERROR: DEMAND_GENERATION_TYPE not found or wrong: it must be AGENAS_FORMULA or MAX_REQUESTS_DISTRIBUTION or ALL")
 			sys.exit(1)
 
 		# move the cursor to the beginning of the file to read the hospital coordinates
@@ -107,26 +107,40 @@ def imgInstGenerator(inst_path, new_path):
 		xpoints = np.amax(np_grid[:,0]) + 1
 		ypoints = np.amax(np_grid[:,1]) + 1
 
-		complete_grid_dict = {}
+		file_list = []
+		if(d_node == "ALL"):
+			file_list = [elem for elem in request_generation_dict.values()]
+		else:
+			file_list.append(request_generation_dict[d_node])
+		
+		print("file_list =", file_list)
+		for elem in file_list:
+			output_file = None
+			if(len(file_list) == 1):
+				output_file = new_path
+			else:
+				output_file = new_path.rsplit(".", 1)[0] + elem + "." + new_path.rsplit(".", 1)[1]
+		
+			complete_grid_dict = {}
 
-		for y in range(ypoints):
-			for x in range(xpoints):
-				if (x, y) in grid_dict:
-					if(request_generation_dict[d_node] == 0):
-						complete_grid_dict[(x, y)] = grid_dict[(x, y)] / 120000 + edge_dim**2 / 700
+			for y in range(ypoints):
+				for x in range(xpoints):
+					if (x, y) in grid_dict:
+						if(elem == "_agenas"):
+							complete_grid_dict[(x, y)] = grid_dict[(x, y)] / 120000 + edge_dim**2 / 700
+						else:
+							complete_grid_dict[(x, y)] = grid_dict[(x, y)] * max_req / population
 					else:
-						complete_grid_dict[(x, y)] = grid_dict[(x, y)] * max_req / population
-				else:
-					complete_grid_dict[(x, y)] = 0
-		'''
-		s = 0
-		for v in complete_grid_dict.values():
-			s = s + v
-		print("s =", s)
-		'''
-
-		writeInstNodes(new_path, complete_grid_dict, nhosp, max_dist)
-		writeHospNodes(new_path, hcoord, px_per_km)
+						complete_grid_dict[(x, y)] = 0
+			'''
+			s = 0
+			for v in complete_grid_dict.values():
+				s = s + v
+			print("s =", s)
+			'''
+			
+			writeInstNodes(output_file, complete_grid_dict, nhosp, max_dist)
+			writeHospNodes(output_file, hcoord, px_per_km)
 
 
 
