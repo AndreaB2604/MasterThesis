@@ -14,7 +14,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
 	for(int i = 0; i < inst->nhosp; i++) {
 		
 		sprintf(cname, "y_%d", (i+1));
-		double obj = 10.0;
+		double obj = 100.0;
 		double lb = 1.0;  
 		double ub = inst->c_hosp[i];
 		
