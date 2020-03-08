@@ -16,25 +16,25 @@ To run the code to solve an instance use:
 
 For example:
 ```bash
-    ./main -f instances_generator/examples/grid.flow -model flow
+./main -f instances_generator/examples/grid.flow -model flow
 ```
 
 The available *parameters* as input can be:
 ```bash
-    -file <file>
-    -model <the model>
-    -random_seed <random seed>		(optional)
-    -time_limit <time limit in seconds>		(optional)
+-file <file>
+-model <the model>
+-random_seed <random seed>		(optional)
+-time_limit <time limit in seconds>		(optional)
 ```
 
 Use:
 ```bash
-    ./main -help
+./main -help
 ```
 
 to get more information or
 ```bash
-    ./main -(parameter)
+./main -(parameter)
 ```
 
 to get more information about the parameters.
@@ -52,7 +52,7 @@ The output file is called *solution_flow.txt* and it can be used with the python
 
 
 ### Generate the instances
-In *instances_generator*, Python scripts to generate instances are present. In order to generate an instance the following files are needed:
+In *instances_generator* folder, Python scripts to generate instances are present. In order to generate an instance the following files are needed:
 * a black and white image of the region where to generate the population ditribution (see for example *ulss6BW.png*),
 * (eventually) a *csv* file containing the top-n most populated cities (see for example *ulss6_pop_distribution.csv*),
 * a *.inst* file (see for example *ulss6_inst.inst*) where:
@@ -71,9 +71,30 @@ In *instances_generator*, Python scripts to generate instances are present. In o
 	* `MAX_DISTANCE` is the radius of coverage of each hospital,
 	* `HOSPITALS_COORD_SECTION` is a keyword to notify that in the next `NUMBER_HOSPITALS` rows, the coordinates of each hospital are specified.
 
-
-
+Then to generate an instance run from *instances_generator* folder:
+```bash
+python img_inst_generator.py <.inst file> <output file path>
+```
+For example
+```bash
+python img_inst_generator.py ulss8/ulss8_inst.inst ulss8/ulss8.flow
+```
+that generates the instance written in the file *ulss8.flow* in folder *ulss8*.
 
 ### Plot the solutions
-The Python script can receive both the *.flow* files, in which case only the demand and service points are plotted, or the *solution_flow.txt* to plot the entire solution
+The Python script can receive both the *.flow* files, in which case only the demand and service points are plotted, or the *solution_flow.txt* to plot the entire solution.
+
+The three files `plot_sol.py`, `plot_weighted_sol.py` and `plot_sol_v2.py` show the solution in three different ways.
+Moreover the first two accept in input another file that is the small interpolated image of the region generated in the instance generator phase. Hence run:
+```bash
+python python plot_sol.py solution_flow.txt
+```
+or
+```bash
+python python plot_sol.py solution_flow.txt <path to the small interpolated image>
+```
+for example:
+```bash
+python plot_sol.py solution_flow.txt img_processing/ulss8/interpolated_small_img.png
+```
 
