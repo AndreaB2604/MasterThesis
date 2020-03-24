@@ -1,4 +1,4 @@
-IMG_SRC : ulss6/ULSSEuganeaBW.png
+IMG_SRC : ulss6/ulss6BW.png
 IMG_PX_PER_KM : 11
 POP_DISTRIBUTION_CSV : ulss6/ulss6_pop_distribution.csv
 SQUARE_EDGE_DIM : 1 km

@@ -47,7 +47,7 @@ The output file is called *solution_flow.txt* and it can be used with the python
 
 ### Dependencies
 * `numpy`,
-* `matplotlib`,
+* `matplotlib <= 3.0.3`,
 * `networkx`.
 
 
