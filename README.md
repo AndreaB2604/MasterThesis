@@ -4,7 +4,7 @@ This repository contains all the code developed during the master thesis at the 
 
 ## Compilation
 To compile the code that solves the model:
-* Install IBM ILOG CPLEX (if the version is different from 12.8, 12.9 or 12.10, change the Makefile);
+* Install IBM ILOG CPLEX (if the version is different from 12.8, 12.9, 12.10 or 20.1 change the Makefile);
 * Compile using `make` in the main folder
 
 
